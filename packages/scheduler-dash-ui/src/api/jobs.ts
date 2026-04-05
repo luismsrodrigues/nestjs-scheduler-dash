@@ -7,7 +7,7 @@ declare global {
 }
 
 function getBase(): string {
-  return window.__SCHEDULER_BASE__ ?? '';
+  return '/' + (window.__SCHEDULER_BASE__ ?? '');
 }
 
 export async function fetchJobs(): Promise<JobsResponse> {
