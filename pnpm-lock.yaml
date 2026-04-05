@@ -14,6 +14,12 @@ importers:
 
   apps/sample:
     dependencies:
+<<<<<<< Updated upstream
+=======
+      '@luisrodrigues/nestjs-scheduler-dashboard':
+        specifier: workspace:*
+        version: link:../../packages/scheduler-dash
+>>>>>>> Stashed changes
       '@nestjs/common':
         specifier: ^10.4.15
         version: 10.4.22(reflect-metadata@0.2.2)(rxjs@7.8.2)

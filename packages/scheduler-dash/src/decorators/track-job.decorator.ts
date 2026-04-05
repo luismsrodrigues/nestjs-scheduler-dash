@@ -17,7 +17,12 @@ export function TrackJob(
 ): MethodDecorator {
   return (target, propertyKey, descriptor: PropertyDescriptor) => {
     const original = descriptor.value;
+<<<<<<< Updated upstream
     const jobName = options?.name ?? String(propertyKey);
+=======
+    const jobName = options?.name ?? `${(target as any).constructor.name}.${String(propertyKey)}`;
+    const jobNoOverlap = options?.noOverlap;
+>>>>>>> Stashed changes
 
     // 1. Wrap the method for error tracking (runs before NestJS's wrapper)
     descriptor.value = async function (...args: unknown[]) {

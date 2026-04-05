@@ -1,8 +1,17 @@
 {
+<<<<<<< Updated upstream
   "name": "scheduler-dash",
   "version": "0.0.1",
   "description": "Dashboard extensions for @nestjs/schedule",
+=======
+  "name": "@luisrodrigues/nestjs-scheduler-dashboard",
+  "version": "0.0.3",
+  "description": "Dashboard module for @nestjs/schedule with embedded UI",
+>>>>>>> Stashed changes
   "main": "dist/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
   "types": "dist/index.d.ts",
   "files": [
     "dist"
