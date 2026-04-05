@@ -10,6 +10,13 @@ export class DashboardController {
     return this.jobsService.getJobs();
   }
 
+  @Get(':name')
+  getJob(@Param('name') name: string) {
+    const job = this.jobsService.getJob(name);
+    if (!job) throw new HttpException(`Job "${name}" not found`, HttpStatus.NOT_FOUND);
+    return job;
+  }
+
   @Post(':name/trigger')
   triggerJob(@Param('name') name: string) {
     const ok = this.jobsService.triggerJob(name);

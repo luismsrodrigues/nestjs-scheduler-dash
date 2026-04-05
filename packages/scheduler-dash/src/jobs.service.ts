@@ -24,6 +24,19 @@ export class JobsService {
     return { cron, intervals, timeouts };
   }
 
+  getJob(name: string) {
+    const job = this.schedulerRegistry.getCronJobs().get(name);
+    if (!job) return null;
+    return {
+      name,
+      cronExpression: (job.cronTime as any).source?.toString() ?? null,
+      running: job.running ?? false,
+      nextRun: job.nextDate()?.toISO() ?? null,
+      history: this.storage.findByJob(name),
+      metrics: this.storage.getMetrics(name),
+    };
+  }
+
   triggerJob(name: string): boolean {
     const job = this.schedulerRegistry.getCronJobs().get(name);
     if (!job) return false;
