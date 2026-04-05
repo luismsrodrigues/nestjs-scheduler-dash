@@ -2,19 +2,20 @@
 
 A plug-and-play dashboard for [`@nestjs/schedule`](https://docs.nestjs.com/techniques/task-scheduling). Visualize cron job executions, track history and metrics, trigger jobs manually, and stop running executions — all from an embedded UI with zero external dependencies.
 
+The dashboard runs on its own dedicated port (default **3636**), completely isolated from your main application.
+
 ---
 
 ## Features
 
-- Embedded UI served directly from your NestJS app (no separate frontend server)
 - Execution history per job with status, duration, and error details
 - Persistent metrics: total runs, failed runs, average duration — independent of history retention
 - Manual job triggering and execution stop from the UI
-- Concurrency control: limit how many jobs run simultaneously with a queue
-- No-overlap mode: skip or queue a job if it is already running
+- Concurrency control: limit how many jobs run simultaneously, with automatic queuing
+- No-overlap mode: skip a job if it is already running
 - Optional HTTP Basic Auth to protect the dashboard
 - Light / dark mode
-- Standalone server mode (separate port) or embedded in your existing app
+- Zero external runtime dependencies — served from a single self-contained HTML file
 
 ---
 
@@ -29,14 +30,14 @@ pnpm add @luisrodrigues/nestjs-scheduler-dashboard
 **Peer dependencies** (install if not already present):
 
 ```bash
-npm install @nestjs/common @nestjs/schedule
+npm install @nestjs/common @nestjs/core @nestjs/schedule
 ```
 
 ---
 
 ## Quick start
 
-### 1. Initialize the dashboard in `main.ts`
+### 1. Call `setupSchedulerDash` in `main.ts`
 
 ```ts
 import { NestFactory } from '@nestjs/core';
@@ -46,15 +47,16 @@ import { setupSchedulerDash } from '@luisrodrigues/nestjs-scheduler-dashboard';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  await setupSchedulerDash(app);
+  // Must be called BEFORE app.listen() so storage is ready before cron jobs start
+  await setupSchedulerDash(app, { port: 3636 });
 
   await app.listen(3000);
+  console.log('App running at   http://localhost:3000');
+  console.log('Dashboard at     http://localhost:3636');
 }
 
 bootstrap();
 ```
-
-The dashboard is now available at `http://localhost:3000/_jobs`.
 
 ### 2. Decorate your jobs
 
@@ -74,24 +76,25 @@ export class ReportJob {
 }
 ```
 
+That's it. Open `http://localhost:3636` to see the dashboard.
+
 ---
 
 ## Configuration
 
-`setupSchedulerDash(app, options?)` accepts the following options:
+`setupSchedulerDash(app, options?)` accepts:
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| `port` | `number` | `3636` | Port for the dashboard HTTP server |
 | `storage` | `Storage` | `new MemoryStorage()` | Storage backend for execution history and metrics |
-| `basePath` | `string` | `'_jobs'` | URL path where the dashboard is mounted |
-| `port` | `number` | — | When set, serves the dashboard on a separate HTTP server instead of mounting on the main app |
-| `maxConcurrent` | `number` | — | Maximum number of `@TrackJob` jobs that can run at the same time. Excess jobs are queued |
+| `maxConcurrent` | `number` | — | Maximum number of jobs that can run simultaneously. Excess jobs are queued |
 | `noOverlap` | `boolean` | `false` | Globally prevent a job from starting if it is already running |
-| `auth` | `{ username, password }` | — | Protect all dashboard routes with HTTP Basic Auth |
+| `auth` | `{ username, password }` | — | Protect the dashboard with HTTP Basic Auth |
 
 ### `storage`
 
-The storage backend persists execution history and metrics. The built-in `MemoryStorage` keeps everything in-process.
+The default `MemoryStorage` keeps everything in-process. You can limit how many history entries are kept per job:
 
 ```ts
 import { MemoryStorage } from '@luisrodrigues/nestjs-scheduler-dashboard';
@@ -103,7 +106,7 @@ await setupSchedulerDash(app, {
 });
 ```
 
-> **Metrics are independent of `historyRetention`.** Even if old history entries are removed, the counters for total runs, failed runs, and average duration keep accumulating.
+> **Metrics are independent of `historyRetention`.** Even after old history entries are trimmed, the counters for total runs, failed runs, and average duration keep accumulating.
 
 To use a custom storage backend, extend the abstract `Storage` class:
 
@@ -124,42 +127,19 @@ export class RedisStorage extends Storage {
 }
 ```
 
-### `basePath`
-
-Changes the URL where the dashboard is served. Must contain only alphanumeric characters, hyphens, underscores, or slashes.
-
-```ts
-await setupSchedulerDash(app, {
-  basePath: 'admin/scheduler',
-  // dashboard → http://localhost:3000/admin/scheduler
-});
-```
-
-### `port`
-
-Serve the dashboard on a completely separate HTTP server, isolated from your main application.
-
-```ts
-await setupSchedulerDash(app, {
-  port: 3001,
-  // dashboard → http://localhost:3001/_jobs
-  // main app  → http://localhost:3000
-});
-```
-
 ### `maxConcurrent`
 
-Limits the total number of `@TrackJob` jobs that can execute simultaneously across your entire application. Jobs that cannot start immediately are saved to storage with status `"queued"` and run in FIFO order as slots free up.
+Limits how many `@TrackJob` jobs can run simultaneously across the entire application. Jobs that exceed the limit are saved to storage with status `"queued"` and run in FIFO order as slots free up.
 
 ```ts
 await setupSchedulerDash(app, {
-  maxConcurrent: 5, // at most 5 jobs running at the same time
+  maxConcurrent: 5,
 });
 ```
 
 ### `noOverlap`
 
-Prevents a job from firing again if the same job is still running. Applies globally to all `@TrackJob`-decorated methods.
+Prevents a job from firing again if it is still running. Applies globally to all `@TrackJob` methods.
 
 ```ts
 await setupSchedulerDash(app, {
@@ -167,7 +147,7 @@ await setupSchedulerDash(app, {
 });
 ```
 
-Can also be set per job via the decorator, which takes precedence over the global setting:
+Can also be overridden per job in the decorator:
 
 ```ts
 @TrackJob(CronExpression.EVERY_MINUTE, { name: 'sync', noOverlap: true })
@@ -176,13 +156,11 @@ async sync() { /* ... */ }
 
 ### `auth`
 
-Protect the dashboard with HTTP Basic Auth.
-
 ```ts
 await setupSchedulerDash(app, {
   auth: {
-    username: 'admin',
-    password: 'supersecret',
+    username: process.env.DASH_USER ?? 'admin',
+    password: process.env.DASH_PASS ?? 'secret',
   },
 });
 ```
@@ -191,7 +169,7 @@ await setupSchedulerDash(app, {
 
 ## `@TrackJob` decorator
 
-`@TrackJob` is a drop-in replacement for `@Cron` from `@nestjs/schedule`. It accepts all the same options plus `noOverlap`.
+Drop-in replacement for `@Cron`. Accepts all the same options plus `noOverlap`.
 
 ```ts
 @TrackJob(cronTime, options?)
@@ -200,9 +178,9 @@ await setupSchedulerDash(app, {
 | Argument | Type | Description |
 |---|---|---|
 | `cronTime` | `string \| CronExpression` | Cron expression or `CronExpression` enum value |
-| `options.name` | `string` | Human-readable job name shown in the dashboard. Defaults to `ClassName.methodName` |
-| `options.noOverlap` | `boolean` | Skip this job if it is already running. Overrides the global `noOverlap` setting |
-| `options.*` | — | All other [`CronOptions`](https://docs.nestjs.com/techniques/task-scheduling) from `@nestjs/schedule` are passed through |
+| `options.name` | `string` | Job name shown in the dashboard. Defaults to `ClassName.methodName` |
+| `options.noOverlap` | `boolean` | Skip this job if it is already running. Overrides the global setting |
+| `options.*` | — | All other [`CronOptions`](https://docs.nestjs.com/techniques/task-scheduling) are passed through |
 
 ```ts
 @TrackJob('0 */6 * * *', {
@@ -217,22 +195,31 @@ async cleanup() {
 
 ---
 
-## Full configuration example
+## API
+
+The dashboard exposes a small REST API on the same port as the UI.
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api` | Returns all jobs with history and metrics |
+| `POST` | `/api/:name/trigger` | Manually trigger a cron job by name |
+| `POST` | `/api/executions/:id/stop` | Stop a running or queued execution by ID |
+
+---
+
+## Full example
 
 ```ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import {
-  setupSchedulerDash,
-  MemoryStorage,
-} from '@luisrodrigues/nestjs-scheduler-dashboard';
+import { setupSchedulerDash, MemoryStorage } from '@luisrodrigues/nestjs-scheduler-dashboard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   await setupSchedulerDash(app, {
+    port: 3636,
     storage: new MemoryStorage({ historyRetention: 100 }),
-    basePath: 'scheduler',
     maxConcurrent: 3,
     noOverlap: true,
     auth: {
@@ -246,18 +233,6 @@ async function bootstrap() {
 
 bootstrap();
 ```
-
----
-
-## API
-
-The dashboard exposes a small REST API used by the UI. You can also call it directly.
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/{basePath}/api` | Returns all jobs with history and metrics |
-| `POST` | `/{basePath}/api/:name/trigger` | Manually trigger a cron job by name |
-| `POST` | `/{basePath}/api/executions/:id/stop` | Stop a running or queued execution by ID |
 
 ---
 
