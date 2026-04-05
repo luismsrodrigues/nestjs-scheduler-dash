@@ -12,7 +12,7 @@
     "skipLibCheck": true,
     "types": ["node"],
     "paths": {
-      "scheduler-dash": ["../../packages/scheduler-dash/src/index.ts"]
+      "@nestjs-scheduler-dash/scheduler-dash": ["../../packages/scheduler-dash/src/index.ts"]
     }
   },
   "include": ["src/**/*"],

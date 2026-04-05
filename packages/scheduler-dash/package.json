@@ -1,5 +1,5 @@
 {
-  "name": "@nestjs-toolkit/scheduler-dash",
+  "name": "@nestjs-scheduler-dash/scheduler-dash",
   "version": "0.0.1",
   "description": "Dashboard module for @nestjs/schedule with embedded UI",
   "main": "dist/index.js",
@@ -35,7 +35,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nestjs-toolkit/scheduler-dash"
+    "url": "https://github.com/nestjs-scheduler-dash/scheduler-dash"
   },
   "dependencies": {
     "zod": "^4.3.6"

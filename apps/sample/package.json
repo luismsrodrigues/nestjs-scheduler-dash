@@ -12,7 +12,7 @@
     "@nestjs/core": "^10.4.15",
     "@nestjs/platform-express": "^10.4.15",
     "@nestjs/schedule": "^4.1.2",
-    "@nestjs-toolkit/scheduler-dash": "workspace:*",
+    "@nestjs-scheduler-dash/scheduler-dash": "workspace:*",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },

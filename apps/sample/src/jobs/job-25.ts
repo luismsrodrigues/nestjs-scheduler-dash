@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CronExpression } from '@nestjs/schedule';
-import { TrackJob } from '@nestjs-toolkit/scheduler-dash';
+import { TrackJob } from '@nestjs-scheduler-dash/scheduler-dash';
 
 @Injectable()
 export class Job25 {
