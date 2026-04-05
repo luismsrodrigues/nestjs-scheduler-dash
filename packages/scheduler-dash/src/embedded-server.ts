@@ -20,15 +20,15 @@ function registerUiRoutes(expressApp: any, base: string, guard: any): void {
     res.send(configJs(base));
   });
 
-  expressApp.get(base, guard, (_req: any, res: any) => {
+  const serveHtml = (_req: any, res: any) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
-  });
+  };
 
-  expressApp.get(`${base}/jobs/*path`, guard, (_req: any, res: any) => {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(html);
-  });
+  expressApp.get(base, guard, serveHtml);
+  expressApp.get(`${base}/`, guard, serveHtml);
+  expressApp.get(`${base}/jobs`, guard, serveHtml);
+  expressApp.get(`${base}/jobs/:name`, guard, serveHtml);
 }
 
 function registerApiRoutes(expressApp: any, base: string, guard: any, jobsService: JobsService): void {

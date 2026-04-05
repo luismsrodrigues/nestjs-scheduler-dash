@@ -1,7 +1,7 @@
 import { Cron } from '@nestjs/schedule';
 import type { CronOptions } from '@nestjs/schedule';
 import { randomUUID } from 'crypto';
-import { SchedulerDashContext } from '../scheduler-dash.context';
+import { getSchedulerDashService } from '../scheduler-dash.bridge';
 import {
   isOverlapping,
   isConcurrencyLimitReached,
@@ -15,20 +15,11 @@ import {
 } from './job-concurrency';
 
 export type TrackJobOptions = CronOptions & {
-  /**
-   * When true, skips the execution if the same job is already running.
-   * Takes precedence over maxConcurrent for same-job overlap.
-   * Defaults to the global `noOverlap` setting from setupSchedulerDash.
-   */
   noOverlap?: boolean;
 };
 
 function formatError(err: unknown): string {
   return err instanceof Error ? (err.stack ?? err.message) : String(err);
-}
-
-function resolveNoOverlap(jobNoOverlap: boolean | undefined): boolean {
-  return jobNoOverlap ?? SchedulerDashContext.noOverlap;
 }
 
 async function runWithoutStorage(
@@ -51,9 +42,11 @@ async function runImmediately(
   jobName: string,
   original: (...a: unknown[]) => unknown,
 ): Promise<unknown> {
-  const storage = SchedulerDashContext.storage!;
-  const id = randomUUID();
+  const service = getSchedulerDashService();
+  const storage = service.storage;
+  if (!storage) return runWithoutStorage(instance, args, jobName, original);
 
+  const id = randomUUID();
   storage.save({ id, jobName, startedAt: new Date(), finishedAt: null, status: 'running' });
   onJobStart(jobName);
   registerRunningExecution(id, jobName, storage);
@@ -84,7 +77,10 @@ function queueExecution(
   noOverlap: boolean,
   original: (...a: unknown[]) => unknown,
 ): void {
-  const storage = SchedulerDashContext.storage!;
+  const service = getSchedulerDashService();
+  const storage = service.storage;
+  if (!storage) return;
+
   const id = randomUUID();
   storage.save({ id, jobName, startedAt: new Date(), finishedAt: null, status: 'queued' });
   enqueueEntry({ instance, args, jobName, executionId: id, noOverlap, original, storage });
@@ -100,8 +96,9 @@ export function TrackJob(
     const jobNoOverlap = options?.noOverlap;
 
     descriptor.value = async function (...args: unknown[]) {
-      const noOverlap = resolveNoOverlap(jobNoOverlap);
-      const storage = SchedulerDashContext.storage;
+      const service = getSchedulerDashService();
+      const noOverlap = jobNoOverlap ?? service?.noOverlap ?? false;
+      const storage = service?.storage ?? null;
 
       if (isOverlapping(jobName, noOverlap)) return;
       if (!storage) return runWithoutStorage(this, args, jobName, original);
