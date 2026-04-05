@@ -1,30 +1,18 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
-import { Controller, Get, Module } from '@nestjs/common';
-import { setupSchedulerDash } from '@nestjs-toolkit/scheduler-dash';
+import { setupSchedulerDash } from '@luisrodrigues/nestjs-scheduler-dashboard';
 import { AppModule } from './app.module';
 
-@Controller()
-class HealthController {
-  @Get()
-  health() {
-    return { status: 'ok' };
-  }
-}
-
-@Module({
-  controllers: [HealthController],
-  imports: [AppModule],
-})
-class MainModule {}
-
 async function bootstrap() {
-  const app = await NestFactory.create(MainModule);
-  
-  await setupSchedulerDash(app, { port: 3636, basePath: 'jobs' });
-  
+  const app = await NestFactory.create(AppModule);
+
+  // Dashboard runs on its own port (default: 3636).
+  // Must be called BEFORE app.listen() so storage is ready before cron jobs start.
+  await setupSchedulerDash(app, { port: 3636 });
+
   await app.listen(3000);
-  console.log('App running on http://localhost:3000');
+  console.log('App running at   http://localhost:3000');
+  console.log('Dashboard at     http://localhost:3636');
 }
 
 bootstrap();

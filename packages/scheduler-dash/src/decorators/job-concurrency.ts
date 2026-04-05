@@ -1,4 +1,4 @@
-import { getSchedulerDashService } from '../scheduler-dash.bridge';
+import { SchedulerDashContext } from '../scheduler-dash.context';
 import { Storage } from '../storage/storage.abstract';
 
 interface QueueEntry {
@@ -27,8 +27,7 @@ export function isOverlapping(jobName: string, noOverlap: boolean): boolean {
 }
 
 export function isConcurrencyLimitReached(): boolean {
-  const service = getSchedulerDashService();
-  const max = service?.maxConcurrent;
+  const max = SchedulerDashContext.maxConcurrent;
   return max !== undefined && runningCount >= max;
 }
 

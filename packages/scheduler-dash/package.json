@@ -1,14 +1,14 @@
 {
-  "name": "@nestjs-toolkit/scheduler-dash",
+  "name": "@luisrodrigues/nestjs-scheduler-dashboard",
   "version": "0.0.1",
-  "description": "Dashboard module for @nestjs/schedule with embedded UI",
+  "description": "Dashboard for @nestjs/schedule — embedded UI, job history, metrics, stop/trigger controls",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
-    "prebuild": "pnpm --filter @nestjs-toolkit/scheduler-dash-ui build",
+    "prebuild": "pnpm --filter @luisrodrigues/nestjs-scheduler-dashboard-ui build",
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch"
   },
@@ -19,15 +19,12 @@
   },
   "devDependencies": {
     "@nestjs/common": "^10.4.15",
-    "@nestjs/core": "^10.4.22",
+    "@nestjs/core": "^10.4.15",
     "@nestjs/schedule": "^4.1.2",
     "@types/node": "^25.5.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@nestjs/platform-express": "^10.4.22",
-    "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2",
     "zod": "^4.3.6"
   },
   "keywords": [
@@ -41,6 +38,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nestjs-toolkit/scheduler-dash"
+    "url": "https://github.com/luisrodrigues/nestjs-scheduler-dashboard"
   }
 }

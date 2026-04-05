@@ -1,7 +1,7 @@
 import { Cron } from '@nestjs/schedule';
 import type { CronOptions } from '@nestjs/schedule';
 import { randomUUID } from 'crypto';
-import { getSchedulerDashService } from '../scheduler-dash.bridge';
+import { SchedulerDashContext } from '../scheduler-dash.context';
 import {
   isOverlapping,
   isConcurrencyLimitReached,
@@ -42,11 +42,9 @@ async function runImmediately(
   jobName: string,
   original: (...a: unknown[]) => unknown,
 ): Promise<unknown> {
-  const service = getSchedulerDashService();
-  const storage = service.storage;
-  if (!storage) return runWithoutStorage(instance, args, jobName, original);
-
+  const storage = SchedulerDashContext.storage!;
   const id = randomUUID();
+
   storage.save({ id, jobName, startedAt: new Date(), finishedAt: null, status: 'running' });
   onJobStart(jobName);
   registerRunningExecution(id, jobName, storage);
@@ -77,10 +75,7 @@ function queueExecution(
   noOverlap: boolean,
   original: (...a: unknown[]) => unknown,
 ): void {
-  const service = getSchedulerDashService();
-  const storage = service.storage;
-  if (!storage) return;
-
+  const storage = SchedulerDashContext.storage!;
   const id = randomUUID();
   storage.save({ id, jobName, startedAt: new Date(), finishedAt: null, status: 'queued' });
   enqueueEntry({ instance, args, jobName, executionId: id, noOverlap, original, storage });
@@ -96,9 +91,8 @@ export function TrackJob(
     const jobNoOverlap = options?.noOverlap;
 
     descriptor.value = async function (...args: unknown[]) {
-      const service = getSchedulerDashService();
-      const noOverlap = jobNoOverlap ?? service?.noOverlap ?? false;
-      const storage = service?.storage ?? null;
+      const noOverlap = jobNoOverlap ?? SchedulerDashContext.noOverlap;
+      const storage = SchedulerDashContext.storage;
 
       if (isOverlapping(jobName, noOverlap)) return;
       if (!storage) return runWithoutStorage(this, args, jobName, original);

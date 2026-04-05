@@ -3,20 +3,11 @@ import { Logger } from '@nestjs/common';
 import { checkBasicAuth, rejectUnauthorized } from './auth';
 import { JobsService } from './jobs.service';
 import { SchedulerDashAuth } from './scheduler-dash.options';
-import { dashboardHtml, CONFIG_PLACEHOLDER } from './ui/dashboard';
+import { dashboardHtml } from './ui/dashboard';
 
-function buildHtml(base: string): string {
-  return dashboardHtml.replace(CONFIG_PLACEHOLDER, `<script src="${base}/config.js"></script>`);
-}
-
-function sendHtml(res: ServerResponse, html: string): void {
+function sendHtml(res: ServerResponse): void {
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-  res.end(html);
-}
-
-function sendConfigJs(res: ServerResponse, base: string): void {
-  res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
-  res.end(`window.__SCHEDULER_BASE__ = ${JSON.stringify(base)};`);
+  res.end(dashboardHtml);
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
@@ -24,10 +15,9 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
   res.end(JSON.stringify(body));
 }
 
-function createRequestHandler(base: string, jobsService: JobsService, auth: SchedulerDashAuth | undefined) {
-  const html            = buildHtml(base);
-  const triggerRe       = new RegExp(`^${base}/api/([^/]+)/trigger$`);
-  const stopExecutionRe = new RegExp(`^${base}/api/executions/([^/]+)/stop$`);
+function createRequestHandler(jobsService: JobsService, auth: SchedulerDashAuth | undefined) {
+  const triggerRe       = /^\/api\/([^/]+)\/trigger$/;
+  const stopExecutionRe = /^\/api\/executions\/([^/]+)\/stop$/;
 
   return (req: IncomingMessage, res: ServerResponse) => {
     const url    = req.url ?? '/';
@@ -35,16 +25,17 @@ function createRequestHandler(base: string, jobsService: JobsService, auth: Sche
 
     if (auth && !checkBasicAuth(req, auth)) return rejectUnauthorized(res);
 
-    if (method === 'GET' && url === `${base}/config.js`) {
-      return sendConfigJs(res, base);
+    // SPA shell — serve index for all UI routes
+    if (method === 'GET' && (url === '/' || url === '/jobs' || url.startsWith('/jobs/'))) {
+      return sendHtml(res);
     }
 
-    if (method === 'GET' && (url === base || url === `${base}/` || url.startsWith(`${base}/jobs/`))) {
-      return sendHtml(res, html);
-    }
-
-    if (method === 'GET' && url === `${base}/api`) {
-      return sendJson(res, 200, jobsService.getJobs());
+    if (method === 'GET' && url === '/api') {
+      try {
+        return sendJson(res, 200, jobsService.getJobs());
+      } catch (err) {
+        return sendJson(res, 500, { error: String(err) });
+      }
     }
 
     const triggerMatch = url.match(triggerRe);
@@ -68,17 +59,15 @@ function createRequestHandler(base: string, jobsService: JobsService, auth: Sche
 
 export function startStandaloneServer(
   port: number,
-  basePath: string,
   jobsService: JobsService,
   auth: SchedulerDashAuth | undefined,
   logger: Logger,
 ) {
-  const base    = `/${basePath}`;
-  const handler = createRequestHandler(base, jobsService, auth);
+  const handler = createRequestHandler(jobsService, auth);
   const server  = createServer(handler);
 
   server.listen(port, () => {
-    logger.log(`Dashboard running at http://localhost:${port}${base}`);
+    logger.log(`Dashboard running at http://localhost:${port}`);
   });
 
   return server;

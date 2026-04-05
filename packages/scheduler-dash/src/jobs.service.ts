@@ -1,13 +1,11 @@
-import { Injectable } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { StorageService } from './storage.service';
+import { Storage } from './storage/storage.abstract';
 import { stopExecutionById } from './decorators/job-concurrency';
 
-@Injectable()
 export class JobsService {
   constructor(
     private readonly schedulerRegistry: SchedulerRegistry,
-    private readonly storageService: StorageService,
+    private readonly storage: Storage,
   ) {}
 
   getJobs() {
@@ -15,9 +13,9 @@ export class JobsService {
       name,
       cronExpression: (job.cronTime as any).source?.toString() ?? null,
       running: job.running ?? false,
-      nextRun: job.nextDate().toISO(),
-      history: this.storageService.findByJob(name),
-      metrics: this.storageService.getMetrics(name),
+      nextRun: job.nextDate()?.toISO() ?? null,
+      history: this.storage.findByJob(name),
+      metrics: this.storage.getMetrics(name),
     }));
 
     const intervals = this.schedulerRegistry.getIntervals().map((name) => ({ name }));

@@ -7,7 +7,6 @@ export interface SchedulerDashAuth {
 
 export interface SchedulerDashOptions {
   storage?: Storage;
-  basePath?: string;
   port?: number;
   maxConcurrent?: number;
   noOverlap?: boolean;

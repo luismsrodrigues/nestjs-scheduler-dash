@@ -8,10 +8,6 @@ export const SchedulerDashAuthSchema = z.object({
 
 export const SchedulerDashOptionsSchema = z.object({
   storage: z.instanceof(Storage).optional(),
-  basePath: z
-    .string()
-    .regex(/^[a-zA-Z0-9_\-/]+$/, 'basePath must contain only alphanumeric characters, hyphens, underscores, or slashes')
-    .optional(),
   port: z
     .number()
     .int('port must be an integer')
