@@ -8,7 +8,7 @@ import { fetchJobs, triggerJob } from '@/api/jobs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { cn, timeAgo, formatNextRun, formatDurationMs } from '@/lib/utils';
+import { cn, timeAgo, formatNextRun } from '@/lib/utils';
 import { useTheme } from '@/contexts/theme';
 import type { CronJob } from '@/types';
 
@@ -119,7 +119,6 @@ export default function DashboardPage() {
   const totalRuns   = jobs.reduce((s, j) => s + j.metrics.totalRuns, 0);
   const totalFailed = jobs.reduce((s, j) => s + j.metrics.failedRuns, 0);
   const activeJobs  = jobs.filter(j => j.running).length;
-  const runningNow  = jobs.reduce((s, j) => s + j.history.filter(h => h.status === 'running' || h.status === 'queued').length, 0);
 
   function ThHeader({ col, label }: { col: SortKey; label: string }) {
     return (
@@ -165,7 +164,7 @@ export default function DashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <StatCard label="Total Jobs" value={jobs.length} />
-          <StatCard label="Active" value={activeJobs} sub={runningNow > 0 ? `${runningNow} executing` : undefined} color="text-emerald-600 dark:text-emerald-400" />
+          <StatCard label="Active" value={activeJobs} color="text-emerald-600 dark:text-emerald-400" />
           <StatCard label="Total Runs" value={totalRuns.toLocaleString()} color="text-blue-600 dark:text-blue-400" />
           <StatCard
             label="Failed Runs"

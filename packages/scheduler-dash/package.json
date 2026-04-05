@@ -1,6 +1,6 @@
 {
   "name": "@luisrodrigues/nestjs-scheduler-dashboard",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Dashboard for @nestjs/schedule — embedded UI, job history, metrics, stop/trigger controls",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
