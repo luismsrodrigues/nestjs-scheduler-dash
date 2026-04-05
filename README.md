@@ -4,6 +4,16 @@ Monorepo for `@luisrodrigues/nestjs-scheduler-dashboard` — a plug-and-play das
 
 ---
 
+## Preview
+
+**Dashboard - Jobs List**
+![Dashboard Jobs List](./1.jpg)
+
+**Job Detail - Execution History**
+![Job Detail](./2.jpg)
+
+---
+
 ## Packages
 
 | Package | Description |
@@ -23,10 +33,22 @@ npm install @luisrodrigues/nestjs-scheduler-dashboard
 ```
 
 ```ts
+// app.module.ts
+import { SchedulerDashModule } from '@luisrodrigues/nestjs-scheduler-dashboard';
+
+@Module({
+  imports: [SchedulerDashModule.forRoot({ route: '/scheduler' })],
+})
+export class AppModule {}
+```
+
+```ts
 // main.ts
-await setupSchedulerDash(app, { port: 3636 });
-await app.listen(3000);
-// Dashboard → http://localhost:3636
+import { initializeSchedulerDash } from '@luisrodrigues/nestjs-scheduler-dashboard';
+import { SchedulerRegistry } from '@nestjs/schedule';
+
+const schedulerRegistry = app.get(SchedulerRegistry);
+initializeSchedulerDash(schedulerRegistry, {});
 ```
 
 ```ts
@@ -34,6 +56,8 @@ await app.listen(3000);
 @TrackJob(CronExpression.EVERY_HOUR, { name: 'my-job' })
 async run() { /* ... */ }
 ```
+
+Access the dashboard at `http://localhost:3000/scheduler`
 
 ---
 
@@ -76,7 +100,7 @@ The UI lives in `packages/scheduler-dash-ui`. After editing:
 pnpm build
 ```
 
-This rebuilds the UI and inlines it as `packages/scheduler-dash/src/ui/dashboard.ts`, which is imported by the standalone server.
+This rebuilds the UI and outputs it to `packages/scheduler-dash/ui/`, which is served by the module.
 
 ### Running the sample
 
@@ -85,7 +109,7 @@ pnpm sample
 ```
 
 - App: `http://localhost:3000`
-- Dashboard: `http://localhost:3636`
+- Dashboard: `http://localhost:3000/scheduler`
 
 The sample app registers several cron jobs decorated with `@TrackJob`. Click **Trigger** on any job to fire it immediately and see history populate.
 
@@ -93,9 +117,10 @@ The sample app registers several cron jobs decorated with `@TrackJob`. Click **T
 
 ## How it works
 
-1. `setupSchedulerDash(app, options)` creates an internal NestJS application context (`NestFactory.createApplicationContext`) that initialises storage and wires it into a `globalThis` singleton (`SchedulerDashContext`).
-2. `@TrackJob` reads `SchedulerDashContext.storage` at runtime to record executions. Because storage is in `globalThis`, it is shared correctly even when pnpm resolves the package to multiple module instances.
-3. A plain Node.js HTTP server starts on the configured port and serves the self-contained dashboard HTML and a small REST API (`/api`, `/api/:name/trigger`, `/api/executions/:id/stop`).
+1. `SchedulerDashModule.forRoot({ route: '/scheduler' })` creates a global NestJS module that sets up the dashboard middleware.
+2. `initializeSchedulerDash(registry, options)` wires the `SchedulerRegistry` and storage into a `globalThis` singleton (`SchedulerDashContext`).
+3. `@TrackJob` reads `SchedulerDashContext` at runtime to record executions. Because storage is in `globalThis`, it is shared correctly even when pnpm resolves the package to multiple module instances.
+4. The dashboard serves a self-contained HTML dashboard and a REST API (`/api`, `/api/:name`, `/api/:name/trigger`, `/api/executions/:id/stop`) on the same port as the host app.
 
 ---
 

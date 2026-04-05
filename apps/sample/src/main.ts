@@ -6,7 +6,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  await setupSchedulerDash(app, { port: 3636 });
+  await setupSchedulerDash(app, { port: 3636, auth: { username: 'admin', password: '123'} });
 
   await app.listen(3000);
 }
