@@ -31,7 +31,7 @@ export async function setupSchedulerDash(
   }
 
   const port   = options.port ?? DEFAULT_PORT;
-  const logger = new Logger('SchedulerDash', { timestamp: true });
+  const logger = new Logger('SchedulerDashboard', { timestamp: true });
 
   @Module({ imports: [DashboardModule.forRoot(options)] })
   class _InternalDashboardApp {}
@@ -42,5 +42,7 @@ export async function setupSchedulerDash(
   const schedulerRegistry = app.get(SchedulerRegistry);
   const jobsService       = new JobsService(schedulerRegistry, storage);
 
-  startStandaloneServer(port, jobsService, options.auth, logger);
+  logger.log(`Dashboard initialized`);
+
+  await startStandaloneServer(port, jobsService, options.auth, logger);
 }

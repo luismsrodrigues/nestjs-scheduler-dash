@@ -62,9 +62,13 @@ Routes served by the standalone server:
 
 Never bypass this pattern. Do not pass storage through NestJS DI across the two contexts — it will break.
 
-### 3. Internal NestJS context bootstrapping
+### 3. Two NestJS contexts — one DI-only, one HTTP
 
-`setupSchedulerDash` uses `NestFactory.createApplicationContext(_InternalDashboardApp, { logger: false })` — not `NestFactory.create`. This creates a DI context with no HTTP server. `DashboardModule.onModuleInit()` fires synchronously before the returned promise resolves, guaranteeing that `SchedulerDashContext.storage` is set **before** `app.listen()` and before any cron job can fire.
+`setupSchedulerDash` runs two separate NestJS contexts in sequence:
+
+1. `NestFactory.createApplicationContext(_InternalDashboardApp)` — DI-only, no HTTP. `DashboardModule.onModuleInit()` fires before the promise resolves, setting `SchedulerDashContext.storage`. This must complete before any cron job fires.
+
+2. `NestFactory.create(DashboardHttpApp)` inside `startStandaloneServer` — full HTTP app (Express) on the dashboard port. Mounts `ServeStaticModule` for the UI and `DashboardController` for the API. `JobsService` is provided as a `useValue` since it's a plain class constructed in step 1 (not a DI-managed class).
 
 **Ordering requirement in `main.ts`:**
 ```ts
@@ -72,15 +76,29 @@ await setupSchedulerDash(app, { port: 3636 });  // MUST come first
 await app.listen(3000);
 ```
 
-### 4. UI is a single self-contained HTML file
+### 4. UI is served by `@nestjs/serve-static` from the `ui/` folder
 
-The React UI is built by `packages/scheduler-dash-ui` using `vite-plugin-singlefile`, which inlines all JS/CSS into one HTML string. The output is written to `packages/scheduler-dash/src/ui/dashboard.ts` as:
+The React UI is built by `packages/scheduler-dash-ui` using a standard Vite build. The `outDir` in `vite.config.ts` is set to `'../scheduler-dash/ui'`, so the build output lands directly at `packages/scheduler-dash/ui/` — no copy step needed.
 
-```ts
-export const dashboardHtml = `<!DOCTYPE html>...`;
+```
+packages/scheduler-dash/ui/
+├── index.html
+└── assets/
+    ├── index-<hash>.js
+    └── index-<hash>.css
 ```
 
-**Do not edit `dashboard.ts` by hand.** Regenerate it with:
+The `ui/` folder is included in the published npm package via the `files` field in `package.json`.
+
+`standalone-server.ts` uses `@nestjs/serve-static` (`ServeStaticModule`) to serve these files. API routes (`/api/(.*)`) are excluded from static serving and handled by `DashboardController` instead.
+
+The path is resolved as `path.join(__dirname, '../ui')`, which works in both contexts:
+- Compiled (published library): `__dirname` = `dist/` → `../ui` = package root `ui/` ✓
+- Bundled via webpack (sample/dev): webpack's `node: { __dirname: true }` option bakes the **source file's path** into the bundle at build time, so `__dirname` = `packages/scheduler-dash/src/` → `../ui` = `packages/scheduler-dash/ui/` ✓
+
+Without `node: { __dirname: true }` in `webpack.config.js`, `__dirname` at runtime would be the bundle output directory (e.g. `apps/sample/dist/`), causing an `ENOENT` error on the wrong path.
+
+**Do not edit files in `ui/` by hand.** Regenerate with:
 ```bash
 pnpm build
 # or just the UI step:
@@ -101,18 +119,25 @@ The React app uses `<BrowserRouter>` with no `basename`. All `fetch` calls in `s
 
 ### Webpack alias — required for workspace development
 
-Because `@luisrodrigues/nestjs-scheduler-dashboard` is a workspace dependency, NestJS CLI's webpack build must be told to bundle it from source instead of externalizing it. This is done in `apps/sample/webpack.config.js`:
+Because `@luisrodrigues/nestjs-scheduler-dashboard` is a workspace dependency, NestJS CLI's webpack build must be told to bundle it from source instead of externalizing it. `apps/sample/webpack.config.js` does two things:
 
+1. **Alias** resolves the package name to the TypeScript source:
 ```js
 alias: {
   '@luisrodrigues/nestjs-scheduler-dashboard': path.resolve(__dirname, '../../packages/scheduler-dash/src/index.ts'),
 }
 ```
 
-And the package is excluded from webpack's `nodeExternals` so it gets bundled:
+2. **Externals function** externalizes all node_modules *except* the workspace package:
 ```js
-if (ctx.request === '@luisrodrigues/nestjs-scheduler-dashboard') return callback(); // don't externalize
+(ctx, callback) => {
+  if (req === '@luisrodrigues/nestjs-scheduler-dashboard') return callback(); // bundle
+  if (!req.startsWith('.') && !path.isAbsolute(req)) return callback(null, `commonjs ${req}`); // externalize
+  return callback();
+}
 ```
+
+This replaces the original NestJS CLI `nodeExternals` entirely. It's simpler and avoids issues where pnpm's non-flat `node_modules` structure causes `nodeExternals` to miss packages (e.g. `@nestjs/serve-static` importing optional `@fastify/static`).
 
 If you rename the package, update **both** the alias key and the externals check in `webpack.config.js`, then run `pnpm install` to refresh the workspace symlink.
 
@@ -175,9 +200,10 @@ Drop-in replacement for `@Cron`. Applies `Cron(cronTime, { name, ...restOptions 
 | Pitfall | What happens | Fix |
 |---|---|---|
 | `setupSchedulerDash` called after `app.listen()` | Storage not ready when first cron fires; first executions unrecorded | Always call before `app.listen()` |
-| Editing `dashboard.ts` directly | Next `pnpm build` overwrites it | Edit UI source in `scheduler-dash-ui/src/`, rebuild |
+| Editing files in `ui/` directly | Next `pnpm build` overwrites them | Edit UI source in `scheduler-dash-ui/src/`, rebuild |
 | Adding `basePath` back | Breaks hardcoded `/api` paths in UI | Don't — dashboard is port-isolated |
 | New package alias not updated in `webpack.config.js` | Webpack can't resolve the import at compile time | Update both alias and externals check |
+| `node: { __dirname: true }` removed from `webpack.config.js` | `__dirname` at runtime = bundle output dir → `ENOENT` on `ui/index.html` | Keep this option; it bakes source paths into the bundle |
 | `pnpm install` not run after package rename | Workspace symlink in `node_modules` points to old name | Run `pnpm install` from repo root |
 | Custom `Storage` subclass not extending abstract base | `z.instanceof(Storage)` check in schema validation fails | Always extend `Storage` from `storage.abstract.ts` |
 
