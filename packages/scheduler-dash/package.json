@@ -1,22 +1,14 @@
 {
-<<<<<<< Updated upstream
-  "name": "scheduler-dash",
+  "name": "@nestjs-toolkit/scheduler-dash",
   "version": "0.0.1",
-  "description": "Dashboard extensions for @nestjs/schedule",
-=======
-  "name": "@luisrodrigues/nestjs-scheduler-dashboard",
-  "version": "0.0.3",
   "description": "Dashboard module for @nestjs/schedule with embedded UI",
->>>>>>> Stashed changes
   "main": "dist/index.js",
-  "publishConfig": {
-    "access": "public"
-  },
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
+    "prebuild": "pnpm --filter @nestjs-toolkit/scheduler-dash-ui build",
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch"
   },
@@ -29,5 +21,21 @@
     "@nestjs/schedule": "^4.1.2",
     "@types/node": "^25.5.2",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "keywords": [
+    "nestjs",
+    "scheduler",
+    "cron",
+    "job",
+    "dashboard",
+    "monitoring"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nestjs-toolkit/scheduler-dash"
   }
 }

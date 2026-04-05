@@ -2,20 +2,29 @@ import { INestApplication, Logger } from '@nestjs/common';
 import { createAuthGuard } from './auth';
 import { JobsService } from './jobs.service';
 import { SchedulerDashAuth } from './scheduler-dash.options';
-import { dashboardHtml } from './ui/dashboard';
+import { dashboardHtml, CONFIG_PLACEHOLDER } from './ui/dashboard';
 
-const PLACEHOLDER = '__SCHEDULER_BASE_PLACEHOLDER__';
+function configJs(base: string): string {
+  return `window.__SCHEDULER_BASE__ = ${JSON.stringify(base)};`;
+}
 
-function renderHtml(base: string): string {
-  return dashboardHtml.replace(PLACEHOLDER, base);
+function buildHtml(base: string): string {
+  return dashboardHtml.replace(CONFIG_PLACEHOLDER, `<script src="${base}/config.js"></script>`);
 }
 
 function registerUiRoutes(expressApp: any, base: string, guard: any): void {
-  const html = renderHtml(base);
+  const html = buildHtml(base);
+
+  expressApp.get(`${base}/config.js`, guard, (_req: any, res: any) => {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.send(configJs(base));
+  });
+
   expressApp.get(base, guard, (_req: any, res: any) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
   });
+
   expressApp.get(`${base}/jobs/*path`, guard, (_req: any, res: any) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);

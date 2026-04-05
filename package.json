@@ -2,15 +2,11 @@
   "name": "nestjs-scheduler-dashboard",
   "private": true,
   "scripts": {
-<<<<<<< Updated upstream
-    "sample": "pnpm --filter sample dev"
-=======
-    "build": "pnpm --filter @luisrodrigues/nestjs-scheduler-dashboard build",
-    "dev:ui": "pnpm --filter @luisrodrigues/nestjs-scheduler-dashboard-ui dev",
-    "dev": "pnpm --filter @luisrodrigues/nestjs-scheduler-dashboard dev",
+    "build": "pnpm --filter @nestjs-toolkit/scheduler-dash build",
+    "dev:ui": "pnpm --filter @nestjs-toolkit/scheduler-dash-ui dev",
+    "dev": "pnpm --filter @nestjs-toolkit/scheduler-dash dev",
     "sample": "pnpm --filter sample dev",
     "sample:build": "pnpm build && pnpm --filter sample build"
->>>>>>> Stashed changes
   },
   "devDependencies": {
     "typescript": "^5.8.3"

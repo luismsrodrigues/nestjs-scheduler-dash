@@ -1,5 +1,5 @@
 {
-  "name": "@luisrodrigues/nestjs-scheduler-dashboard-ui",
+  "name": "@nestjs-toolkit/scheduler-dash-ui",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -13,8 +13,9 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
-    "recharts": "^3.8.1",
-    "tailwind-merge": "^2.6.0"
+    "tailwind-merge": "^2.6.0",
+    "class-variance-authority": "^0.7.1",
+    "recharts": "^2.15.3"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

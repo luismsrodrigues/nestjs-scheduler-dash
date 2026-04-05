@@ -1,10 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CronExpression } from '@nestjs/schedule';
-<<<<<<< Updated upstream
-import { TrackJob } from 'scheduler-dash';
-=======
 import { TrackJob } from '@luisrodrigues/nestjs-scheduler-dashboard';
->>>>>>> Stashed changes
 
 @Injectable()
 export class HourlyJob {

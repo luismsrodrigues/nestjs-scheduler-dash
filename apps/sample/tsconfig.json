@@ -12,11 +12,7 @@
     "skipLibCheck": true,
     "types": ["node"],
     "paths": {
-<<<<<<< Updated upstream
-      "scheduler-dash": ["../../packages/scheduler-dash/src/index.ts"]
-=======
       "@luisrodrigues/nestjs-scheduler-dashboard": ["../../packages/scheduler-dash/src/index.ts"]
->>>>>>> Stashed changes
     }
   },
   "include": ["src/**/*"],
