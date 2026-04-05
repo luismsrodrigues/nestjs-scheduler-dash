@@ -3,6 +3,6 @@ export interface JobExecution {
   jobName: string;
   startedAt: Date;
   finishedAt: Date | null;
-  status: 'running' | 'completed' | 'failed';
+  status: 'running' | 'queued' | 'completed' | 'failed';
   error?: string;
 }

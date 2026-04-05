@@ -2,50 +2,111 @@ import { Cron } from '@nestjs/schedule';
 import type { CronOptions } from '@nestjs/schedule';
 import { randomUUID } from 'crypto';
 import { SchedulerDashContext } from '../scheduler-dash.context';
+import {
+  isOverlapping,
+  isConcurrencyLimitReached,
+  enqueueEntry,
+  runEntry,
+  onJobStart,
+  onJobEnd,
+} from './job-concurrency';
 
-/**
- * Drop-in replacement for @Cron that also tracks execution history.
- * Wraps the method before NestJS's own try-catch so errors are recorded
- * as "failed" instead of being silently swallowed.
- *
- * If no `options.name` is provided, the method name is used — ensuring the
- * job name is always stable and matches what SchedulerRegistry exposes.
- */
+export type TrackJobOptions = CronOptions & {
+  /**
+   * When true, skips the execution silently if the same job is already running.
+   * Takes precedence over maxConcurrent for same-job overlap.
+   * Defaults to the global `noOverlap` setting from setupSchedulerDash.
+   */
+  noOverlap?: boolean;
+};
+
+function formatError(err: unknown): string {
+  return err instanceof Error ? (err.stack ?? err.message) : String(err);
+}
+
+function resolveNoOverlap(jobNoOverlap: boolean | undefined): boolean {
+  return jobNoOverlap ?? SchedulerDashContext.noOverlap;
+}
+
+async function runWithoutStorage(
+  instance: unknown,
+  args: unknown[],
+  jobName: string,
+  original: (...a: unknown[]) => unknown,
+): Promise<unknown> {
+  onJobStart(jobName);
+  try {
+    return await original.apply(instance, args);
+  } finally {
+    onJobEnd(jobName);
+  }
+}
+
+async function runImmediately(
+  instance: unknown,
+  args: unknown[],
+  jobName: string,
+  original: (...a: unknown[]) => unknown,
+): Promise<unknown> {
+  const storage = SchedulerDashContext.storage!;
+  const id = randomUUID();
+
+  storage.save({ id, jobName, startedAt: new Date(), finishedAt: null, status: 'running' });
+  onJobStart(jobName);
+
+  try {
+    const result = await original.apply(instance, args);
+    storage.update(id, { finishedAt: new Date(), status: 'completed' });
+    return result;
+  } catch (err) {
+    storage.update(id, { finishedAt: new Date(), status: 'failed', error: formatError(err) });
+    throw err;
+  } finally {
+    onJobEnd(jobName);
+  }
+}
+
+function queueExecution(
+  instance: unknown,
+  args: unknown[],
+  jobName: string,
+  noOverlap: boolean,
+  original: (...a: unknown[]) => unknown,
+): void {
+  const storage = SchedulerDashContext.storage!;
+  const id = randomUUID();
+
+  storage.save({ id, jobName, startedAt: new Date(), finishedAt: null, status: 'queued' });
+  enqueueEntry({ instance, args, jobName, executionId: id, noOverlap, original, storage });
+}
+
 export function TrackJob(
   cronTime: Parameters<typeof Cron>[0],
-  options?: CronOptions,
+  options?: TrackJobOptions,
 ): MethodDecorator {
   return (target, propertyKey, descriptor: PropertyDescriptor) => {
     const original = descriptor.value;
     const jobName = options?.name ?? String(propertyKey);
+    const jobNoOverlap = options?.noOverlap;
 
-    // 1. Wrap the method for error tracking (runs before NestJS's wrapper)
     descriptor.value = async function (...args: unknown[]) {
+      const noOverlap = resolveNoOverlap(jobNoOverlap);
       const storage = SchedulerDashContext.storage;
 
-      if (!storage) {
-        return original.apply(this, args);
+      if (isOverlapping(jobName, noOverlap)) return;
+
+      if (!storage) return runWithoutStorage(this, args, jobName, original);
+
+      if (isConcurrencyLimitReached()) {
+        queueExecution(this, args, jobName, noOverlap, original);
+        return;
       }
 
-      const id = randomUUID();
-      storage.save({ id, jobName, startedAt: new Date(), finishedAt: null, status: 'running' });
-
-      try {
-        const result = await original.apply(this, args);
-        storage.update(id, { finishedAt: new Date(), status: 'completed' });
-        return result;
-      } catch (err) {
-        storage.update(id, {
-          finishedAt: new Date(),
-          status: 'failed',
-          error: err instanceof Error ? (err.stack ?? err.message) : String(err),
-        });
-        throw err; // rethrow so NestJS still logs it via [Scheduler]
-      }
+      return runImmediately(this, args, jobName, original);
     };
 
-    // 2. Apply @Cron with the resolved name so SchedulerRegistry uses the same key
-    Cron(cronTime, { name: jobName, ...options })(target, propertyKey, descriptor);
+    const { noOverlap: _, ...cronOptions } = options ?? {};
+    Cron(cronTime, { name: jobName, ...cronOptions })(target, propertyKey, descriptor);
 
     return descriptor;
   };

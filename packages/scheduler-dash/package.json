@@ -1,14 +1,17 @@
 {
-  "name": "scheduler-dash",
+  "name": "@nestjs-toolkit/scheduler-dash",
   "version": "0.0.1",
-  "description": "Dashboard extensions for @nestjs/schedule",
+  "description": "Dashboard module for @nestjs/schedule with embedded UI",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
+    "build:ui": "cd ui && npm install && npm run build",
+    "prebuild": "npm run build:ui",
     "build": "tsc -p tsconfig.json",
+    "dev:ui": "cd ui && npm install && npm run dev",
     "dev": "tsc -p tsconfig.json --watch"
   },
   "peerDependencies": {
@@ -20,5 +23,21 @@
     "@nestjs/schedule": "^4.1.2",
     "@types/node": "^25.5.2",
     "typescript": "^5.8.3"
+  },
+  "keywords": [
+    "nestjs",
+    "scheduler",
+    "cron",
+    "job",
+    "dashboard",
+    "monitoring"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nestjs-toolkit/scheduler-dash"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
   }
 }
