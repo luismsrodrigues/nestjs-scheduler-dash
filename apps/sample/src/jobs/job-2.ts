@@ -9,5 +9,6 @@ export class Job2 {
   @TrackJob(CronExpression.EVERY_MINUTE, { name: 'job-2' })
   run() {
     this.logger.log('Job2 running');
+    throw new Error('Job2 error');
   }
 }

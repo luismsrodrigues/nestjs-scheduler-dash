@@ -7,10 +7,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   await setupSchedulerDash(app, {
-    storage: new MemoryStorage({ maxExecutions: 5 }),
-    basePath: 'scheduler',
-    noOverlap: true,
-    maxConcurrent: 1,
+    storage: new MemoryStorage({ historyRetention: 2 }),
+    // basePath: 'scheduler',
+    // noOverlap: true,
+    // maxConcurrent: 1,
     // auth: { username: 'admin', password: 'secret' },
   });
 

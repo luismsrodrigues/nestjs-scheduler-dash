@@ -85,15 +85,9 @@ export default function JobDetailPage() {
   }
 
   const history = job ? [...job.history].reverse() : [];
-  const total = history.length;
-  const succeeded = history.filter(h => h.status === 'completed').length;
-  const failed = history.filter(h => h.status === 'failed').length;
-  const avgDuration = (() => {
-    const finished = history.filter(h => h.finishedAt);
-    if (!finished.length) return '—';
-    const avg = finished.reduce((acc, h) => acc + (new Date(h.finishedAt!).getTime() - new Date(h.startedAt).getTime()), 0) / finished.length;
-    return avg < 1000 ? `${Math.round(avg)}ms` : `${(avg / 1000).toFixed(2)}s`;
-  })();
+  const { totalRuns, failedRuns, avgDurationMs } = job?.metrics ?? { totalRuns: 0, failedRuns: 0, avgDurationMs: 0 };
+  const succeededRuns = totalRuns - failedRuns;
+  const avgDuration = avgDurationMs === 0 ? '—' : avgDurationMs < 1000 ? `${avgDurationMs}ms` : `${(avgDurationMs / 1000).toFixed(2)}s`;
 
   if (loading) {
     return (
@@ -175,12 +169,12 @@ export default function JobDetailPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard label="Total Runs" value={total} />
-          <StatCard label="Succeeded" value={succeeded} color="text-emerald-500 dark:text-emerald-400" />
+          <StatCard label="Total Runs" value={totalRuns} />
+          <StatCard label="Succeeded" value={succeededRuns} color="text-emerald-500 dark:text-emerald-400" />
           <StatCard
             label="Failed"
-            value={failed}
-            color={failed > 0 ? 'text-red-500 dark:text-red-400' : 'text-zinc-900 dark:text-zinc-100'}
+            value={failedRuns}
+            color={failedRuns > 0 ? 'text-red-500 dark:text-red-400' : 'text-zinc-900 dark:text-zinc-100'}
           />
           <StatCard label="Avg Duration" value={avgDuration} color="text-teal-500 dark:text-teal-400" />
         </div>
@@ -209,7 +203,7 @@ export default function JobDetailPage() {
                     {history.map((exec, i) => (
                       <tr key={exec.id} className="border-b border-zinc-100 dark:border-zinc-800/30 hover:bg-zinc-50 dark:hover:bg-zinc-800/20 transition-colors">
                         <td className="px-5 py-3.5 font-mono text-xs text-zinc-400 dark:text-zinc-600">
-                          {total - i}
+                          {history.length - i}
                         </td>
                         <td className="px-5 py-3.5 font-mono text-xs text-zinc-700 dark:text-zinc-300">
                           {formatDate(exec.startedAt)}

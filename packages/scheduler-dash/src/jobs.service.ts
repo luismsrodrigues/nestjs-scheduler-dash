@@ -15,6 +15,7 @@ export class JobsService {
       running: job.running ?? false,
       nextRun: job.nextDate().toISO(),
       history: this.storage.findByJob(name),
+      metrics: this.storage.getMetrics(name),
     }));
 
     const intervals = this.schedulerRegistry.getIntervals().map((name) => ({ name }));

@@ -10,23 +10,26 @@ import { mountOnApp } from './embedded-server';
 
 export { TrackJob } from './decorators/track-job.decorator';
 export { Storage } from './storage/storage.abstract';
+export type { IStorageOptions } from './storage/storage.abstract';
 export { MemoryStorage } from './storage/memory.storage';
-export type { MemoryStorageOptions } from './storage/memory.storage';
 export type { JobExecution } from './storage/job-execution.interface';
+export type { JobMetrics } from './storage/job-metrics.interface';
 export type { SchedulerDashOptions, SchedulerDashAuth } from './scheduler-dash.options';
 
 export async function setupSchedulerDash(
   app: INestApplication,
-  options: SchedulerDashOptions,
+  options: SchedulerDashOptions = {},
 ): Promise<void> {
   const parsed = SchedulerDashOptionsSchema.safeParse(options);
   if (!parsed.success) {
     throw new Error(`[SchedulerDash] Invalid options:\n${parsed.error.issues.map(i => `  • ${i.path.join('.')}: ${i.message}`).join('\n')}`);
   }
 
-  const storage = options.storage ?? new MemoryStorage();
+  const storage = options.storage ?? new MemoryStorage({
+    historyRetention: 10
+  });
   const basePath = (options.basePath ?? '_jobs').replace(/^\//, '');
-  const logger = new Logger('SchedulerDash');
+  const logger = new Logger('SchedulerDash-Dashboard', { timestamp: true });
 
   SchedulerDashContext.storage = storage;
   SchedulerDashContext.basePath = basePath;
