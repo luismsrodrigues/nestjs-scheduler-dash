@@ -1,13 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { SCHEDULER_DASH_STORAGE } from './scheduler-dash.options';
 import { Storage } from './storage/storage.abstract';
+import { stopExecutionById } from './decorators/job-concurrency';
 
-@Injectable()
 export class JobsService {
   constructor(
     private readonly schedulerRegistry: SchedulerRegistry,
-    @Inject(SCHEDULER_DASH_STORAGE) private readonly storage: Storage,
+    private readonly storage: Storage,
   ) {}
 
   getJobs() {
@@ -15,14 +13,28 @@ export class JobsService {
       name,
       cronExpression: (job.cronTime as any).source?.toString() ?? null,
       running: job.running ?? false,
-      nextRun: job.nextDate().toISO(),
+      nextRun: job.nextDate()?.toISO() ?? null,
       history: this.storage.findByJob(name),
+      metrics: this.storage.getMetrics(name),
     }));
 
     const intervals = this.schedulerRegistry.getIntervals().map((name) => ({ name }));
     const timeouts = this.schedulerRegistry.getTimeouts().map((name) => ({ name }));
 
     return { cron, intervals, timeouts };
+  }
+
+  getJob(name: string) {
+    const job = this.schedulerRegistry.getCronJobs().get(name);
+    if (!job) return null;
+    return {
+      name,
+      cronExpression: (job.cronTime as any).source?.toString() ?? null,
+      running: job.running ?? false,
+      nextRun: job.nextDate()?.toISO() ?? null,
+      history: this.storage.findByJob(name),
+      metrics: this.storage.getMetrics(name),
+    };
   }
 
   triggerJob(name: string): boolean {
@@ -32,17 +44,7 @@ export class JobsService {
     return true;
   }
 
-  stopJob(name: string): boolean {
-    const job = this.schedulerRegistry.getCronJobs().get(name);
-    if (!job) return false;
-    job.stop();
-    return true;
-  }
-
-  startJob(name: string): boolean {
-    const job = this.schedulerRegistry.getCronJobs().get(name);
-    if (!job) return false;
-    job.start();
-    return true;
+  stopExecution(executionId: string): boolean {
+    return stopExecutionById(executionId);
   }
 }
