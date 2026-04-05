@@ -1,0 +1,10 @@
+{
+  "name": "nestjs-scheduler-dashboard",
+  "private": true,
+  "scripts": {
+    "sample": "pnpm --filter sample dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

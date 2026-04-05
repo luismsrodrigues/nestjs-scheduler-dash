@@ -1,0 +1,24 @@
+{
+  "name": "scheduler-dash",
+  "version": "0.0.1",
+  "description": "Dashboard extensions for @nestjs/schedule",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/schedule": "^4.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^10.4.15",
+    "@nestjs/schedule": "^4.1.2",
+    "@types/node": "^25.5.2",
+    "typescript": "^5.8.3"
+  }
+}
