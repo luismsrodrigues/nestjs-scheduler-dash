@@ -24,23 +24,24 @@ function StatusIcon({ status }: { status: JobExecution['status'] }) {
   return <Loader2 className="w-3.5 h-3.5 text-blue-500 shrink-0 animate-spin" />;
 }
 
-function ErrorRow({ error }: { error: string }) {
-  const [open, setOpen] = useState(false);
+function ErrorRow({ error, expanded, onToggle }: { error: string; expanded: boolean; onToggle: () => void }) {
   return (
-    <div className="mt-1.5">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-1 text-xs text-red-500 hover:text-red-400 transition-colors font-mono"
-      >
-        {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-        {error.split('\n')[0]}
-      </button>
-      {open && (
-        <pre className="mt-1.5 p-3 rounded-md bg-red-500/5 border border-red-500/10 text-xs font-mono text-red-400 overflow-x-auto whitespace-pre-wrap break-all">
-          {error}
-        </pre>
-      )}
-    </div>
+    <tr className="border-b border-red-500/10 bg-red-500/5">
+      <td colSpan={4} className="px-4 py-2">
+        <button
+          onClick={onToggle}
+          className="flex items-center gap-2 text-xs text-red-500 hover:text-red-400 transition-colors font-mono w-full"
+        >
+          {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          {expanded ? 'Hide error' : 'Show error'}
+        </button>
+        {expanded && (
+          <pre className="mt-2 p-3 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-red-500/10 text-xs font-mono text-red-400 overflow-x-auto whitespace-pre-wrap break-all">
+            {error}
+          </pre>
+        )}
+      </td>
+    </tr>
   );
 }
 
@@ -81,6 +82,7 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actioning, setActioning] = useState(false);
+  const [expandedError, setExpandedError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -276,39 +278,54 @@ export default function JobDetailPage() {
                 </thead>
                 <tbody>
                   {history.map((exec, i) => (
-                    <tr
-                      key={exec.id}
-                      className="border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50 dark:hover:bg-zinc-800/20 transition-colors"
-                    >
-                      <td className="px-4 py-3 font-mono text-xs text-zinc-400 dark:text-zinc-600">
-                        {history.length - i}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-xs text-zinc-700 dark:text-zinc-300">
-                        {formatDate(exec.startedAt)}
-                        <span className="text-zinc-400 dark:text-zinc-600 ml-2">({timeAgo(exec.startedAt)})</span>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-xs text-zinc-500 dark:text-zinc-400">
-                        {formatDuration(exec.startedAt, exec.finishedAt)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <StatusIcon status={exec.status} />
-                          <Badge variant={exec.status}>{exec.status}</Badge>
-                          {(exec.status === 'running' || exec.status === 'queued') && (
-                            <button
-                              onClick={() => doAction(() => stopExecution(exec.id))}
-                              disabled={actioning}
-                              className="ml-2 flex items-center gap-1 text-xs text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-40 font-mono"
-                              title="Stop execution"
-                            >
-                              <StopCircle className="w-3.5 h-3.5" />
-                              stop
-                            </button>
-                          )}
-                        </div>
-                        {exec.error && <ErrorRow error={exec.error} />}
-                      </td>
-                    </tr>
+                    <>
+                      <tr
+                        key={exec.id}
+                        className="border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50 dark:hover:bg-zinc-800/20 transition-colors cursor-pointer"
+                        onClick={() => exec.error && setExpandedError(expandedError === exec.id ? null : exec.id)}
+                      >
+                        <td className="px-4 py-3 font-mono text-xs text-zinc-400 dark:text-zinc-600">
+                          {history.length - i}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs text-zinc-700 dark:text-zinc-300">
+                          {formatDate(exec.startedAt)}
+                          <span className="text-zinc-400 dark:text-zinc-600 ml-2">({timeAgo(exec.startedAt)})</span>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+                          {formatDuration(exec.startedAt, exec.finishedAt)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <StatusIcon status={exec.status} />
+                            <Badge variant={exec.status}>{exec.status}</Badge>
+                            {(exec.status === 'running' || exec.status === 'queued') && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); doAction(() => stopExecution(exec.id)); }}
+                                disabled={actioning}
+                                className="ml-2 flex items-center gap-1 text-xs text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-40 font-mono"
+                                title="Stop execution"
+                              >
+                                <StopCircle className="w-3.5 h-3.5" />
+                                stop
+                              </button>
+                            )}
+                            {exec.error && (
+                              <span className="ml-auto text-xs text-red-500 font-mono">
+                                {expandedError === exec.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                      {exec.error && expandedError === exec.id && (
+                        <ErrorRow
+                          key={`error-${exec.id}`}
+                          error={exec.error}
+                          expanded={true}
+                          onToggle={() => setExpandedError(null)}
+                        />
+                      )}
+                    </>
                   ))}
                 </tbody>
               </table>
