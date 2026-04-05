@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { setupSchedulerDash, MemoryStorage } from '@nestjs-scheduler-dash/scheduler-dash';
+import { setupSchedulerDash, MemoryStorage } from '@nestjs-scheduler-dash/dashboard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

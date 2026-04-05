@@ -1,5 +1,5 @@
 {
-  "name": "@nestjs-scheduler-dash/scheduler-dash",
+  "name": "@nestjs-scheduler-dash/dashboard",
   "version": "0.0.1",
   "description": "Dashboard module for @nestjs/schedule with embedded UI",
   "main": "dist/index.js",
