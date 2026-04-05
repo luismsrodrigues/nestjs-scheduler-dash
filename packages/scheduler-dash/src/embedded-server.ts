@@ -33,6 +33,13 @@ function registerApiRoutes(expressApp: any, base: string, guard: any, jobsServic
     if (!ok) return res.status(404).json({ message: `Job "${name}" not found` });
     res.json({ triggered: name });
   });
+
+  expressApp.post(`${base}/api/executions/:id/stop`, guard, (req: any, res: any) => {
+    const id = decodeURIComponent(req.params.id);
+    const ok = jobsService.stopExecution(id);
+    if (!ok) return res.status(404).json({ message: `Execution "${id}" not found or already finished` });
+    res.json({ stopped: id });
+  });
 }
 
 export function mountOnApp(
@@ -49,6 +56,5 @@ export function mountOnApp(
   registerUiRoutes(expressApp, base, guard);
   registerApiRoutes(expressApp, base, guard, jobsService);
 
-  logger.log(`Dashboard available at http://localhost:<port>${base}`);
-  logger.log(`API available at http://localhost:<port>${base}/api`);
+  logger.log(`Dashboard available at ${base}`);
 }

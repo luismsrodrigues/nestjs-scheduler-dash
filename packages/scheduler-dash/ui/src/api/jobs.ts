@@ -15,3 +15,8 @@ export async function triggerJob(name: string): Promise<void> {
   const res = await fetch(`${getBase()}/${encodeURIComponent(name)}/trigger`, { method: 'POST' });
   if (!res.ok) throw new Error(`Failed to trigger job: ${res.status}`);
 }
+
+export async function stopExecution(executionId: string): Promise<void> {
+  const res = await fetch(`${getBase()}/executions/${encodeURIComponent(executionId)}/stop`, { method: 'POST' });
+  if (!res.ok) throw new Error(`Failed to stop execution: ${res.status}`);
+}

@@ -9,6 +9,10 @@ import {
   runEntry,
   onJobStart,
   onJobEnd,
+  registerRunningExecution,
+  unregisterRunningExecution,
+  wasExecutionStopped,
+  consumeStoppedExecution,
 } from './job-concurrency';
 
 export type TrackJobOptions = CronOptions & {
@@ -53,16 +57,24 @@ async function runImmediately(
 
   storage.save({ id, jobName, startedAt: new Date(), finishedAt: null, status: 'running' });
   onJobStart(jobName);
+  registerRunningExecution(id, jobName, storage);
 
   try {
     const result = await original.apply(instance, args);
-    storage.update(id, { finishedAt: new Date(), status: 'completed' });
+    if (!wasExecutionStopped(id)) {
+      storage.update(id, { finishedAt: new Date(), status: 'completed' });
+    }
     return result;
   } catch (err) {
-    storage.update(id, { finishedAt: new Date(), status: 'failed', error: formatError(err) });
+    if (!wasExecutionStopped(id)) {
+      storage.update(id, { finishedAt: new Date(), status: 'failed', error: formatError(err) });
+    }
     throw err;
   } finally {
-    onJobEnd(jobName);
+    unregisterRunningExecution(id);
+    if (!consumeStoppedExecution(id)) {
+      onJobEnd(jobName);
+    }
   }
 }
 

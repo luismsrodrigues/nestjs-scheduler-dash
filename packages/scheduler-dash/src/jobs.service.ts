@@ -1,5 +1,6 @@
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { Storage } from './storage/storage.abstract';
+import { stopExecutionById } from './decorators/job-concurrency';
 
 export class JobsService {
   constructor(
@@ -27,5 +28,9 @@ export class JobsService {
     if (!job) return false;
     job.fireOnTick();
     return true;
+  }
+
+  stopExecution(executionId: string): boolean {
+    return stopExecutionById(executionId);
   }
 }

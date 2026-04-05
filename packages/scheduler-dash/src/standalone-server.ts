@@ -36,8 +36,15 @@ function handleNotFound(res: ServerResponse): void {
   res.end('Not Found');
 }
 
+function handleStopExecution(res: ServerResponse, jobsService: JobsService, encodedId: string): void {
+  const id = decodeURIComponent(encodedId);
+  const ok = jobsService.stopExecution(id);
+  sendJson(res, ok ? 200 : 404, ok ? { stopped: id } : { message: `Execution "${id}" not found or already finished` });
+}
+
 function createRequestHandler(base: string, jobsService: JobsService, auth: SchedulerDashAuth | undefined) {
   const triggerRe = new RegExp(`^${base}/api/([^/]+)/trigger$`);
+  const stopExecutionRe = new RegExp(`^${base}/api/executions/([^/]+)/stop$`);
 
   return (req: IncomingMessage, res: ServerResponse) => {
     const url = req.url ?? '/';
@@ -58,6 +65,11 @@ function createRequestHandler(base: string, jobsService: JobsService, auth: Sche
     const triggerMatch = url.match(triggerRe);
     if (method === 'POST' && triggerMatch) {
       return handleTrigger(res, jobsService, triggerMatch[1]);
+    }
+
+    const stopExecutionMatch = url.match(stopExecutionRe);
+    if (method === 'POST' && stopExecutionMatch) {
+      return handleStopExecution(res, jobsService, stopExecutionMatch[1]);
     }
 
     handleNotFound(res);

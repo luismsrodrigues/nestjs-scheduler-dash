@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Zap, RefreshCw, Sun, Moon,
-  CheckCircle2, XCircle, Loader2, Clock, ChevronDown, ChevronUp,
+  CheckCircle2, XCircle, Loader2, Clock, StopCircle, ChevronDown, ChevronUp,
 } from 'lucide-react';
-import { fetchJobs, triggerJob } from '@/api/jobs';
+import { fetchJobs, triggerJob, stopExecution } from '@/api/jobs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -16,6 +16,7 @@ function StatusIcon({ status }: { status: JobExecution['status'] }) {
   if (status === 'completed') return <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />;
   if (status === 'failed')    return <XCircle className="w-4 h-4 text-red-400 shrink-0" />;
   if (status === 'queued')    return <Clock className="w-4 h-4 text-blue-400 shrink-0" />;
+  if (status === 'stopped')   return <StopCircle className="w-4 h-4 text-zinc-400 shrink-0" />;
   return <Loader2 className="w-4 h-4 text-amber-400 shrink-0 animate-spin" />;
 }
 
@@ -223,6 +224,17 @@ export default function JobDetailPage() {
                               <StatusIcon status={exec.status} />
                               <Badge variant={exec.status}>{exec.status}</Badge>
                             </div>
+                            {(exec.status === 'running' || exec.status === 'queued') && (
+                              <button
+                                onClick={() => doAction(() => stopExecution(exec.id))}
+                                disabled={actioning}
+                                className="ml-auto flex items-center gap-1 text-xs text-zinc-400 hover:text-red-400 transition-colors font-mono disabled:opacity-40"
+                                title="Stop execution"
+                              >
+                                <StopCircle className="w-3.5 h-3.5" />
+                                stop
+                              </button>
+                            )}
                           </div>
                           {exec.error && <ErrorRow error={exec.error} />}
                         </td>
