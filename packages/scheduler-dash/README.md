@@ -255,6 +255,12 @@ bootstrap();
 
 ---
 
+## Inspiration
+
+This project was inspired by [Hangfire](https://www.hangfire.io/) — a .NET background job framework with a built-in dashboard for monitoring and managing recurring jobs. The goal was to bring a similar developer experience to the NestJS ecosystem.
+
+---
+
 ## License
 
 MIT
