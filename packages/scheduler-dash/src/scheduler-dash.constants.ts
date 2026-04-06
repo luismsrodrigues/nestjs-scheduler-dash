@@ -1,0 +1,2 @@
+export const STORAGE_TOKEN = Symbol('SCHEDULER_DASH_STORAGE');
+export const OPTIONS_TOKEN  = Symbol('SCHEDULER_DASH_OPTIONS');

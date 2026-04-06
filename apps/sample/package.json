@@ -8,11 +8,12 @@
     "start": "nest start"
   },
   "dependencies": {
+    "@luisrodrigues/nestjs-scheduler-dashboard": "workspace:*",
     "@nestjs/common": "^10.4.15",
+    "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^10.4.15",
     "@nestjs/platform-express": "^10.4.15",
     "@nestjs/schedule": "^4.1.2",
-    "@luisrodrigues/nestjs-scheduler-dashboard": "workspace:*",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },

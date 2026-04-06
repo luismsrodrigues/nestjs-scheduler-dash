@@ -4,11 +4,12 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: './',
   resolve: {
     alias: { '@': resolve(__dirname, 'src') },
   },
   build: {
-    outDir: '../scheduler-dash/ui',
+    outDir: '../scheduler-dash/src/public',
     emptyOutDir: true,
     target: 'esnext',
     minify: 'esbuild',

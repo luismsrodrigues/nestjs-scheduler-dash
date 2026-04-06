@@ -6,11 +6,7 @@ Monorepo for `@luisrodrigues/nestjs-scheduler-dashboard` — a plug-and-play das
 
 ## Preview
 
-**Dashboard - Jobs List**
-![Dashboard Jobs List](./1.jpg)
-
-**Job Detail - Execution History**
-![Job Detail](./2.jpg)
+<img src="./docs/pictures/1.jpg" width="49%" alt="Dashboard - Jobs List" /> <img src="./docs/pictures/2.jpg" width="49%" alt="Job Detail - Execution History" />
 
 ---
 
@@ -18,8 +14,8 @@ Monorepo for `@luisrodrigues/nestjs-scheduler-dashboard` — a plug-and-play das
 
 | Package | Description |
 |---|---|
-| [`packages/scheduler-dash`](./packages/scheduler-dash) | The publishable library — `setupSchedulerDash`, `@TrackJob`, storage abstractions |
-| [`packages/scheduler-dash-ui`](./packages/scheduler-dash-ui) | React + Tailwind UI, built into a single HTML file embedded in the library |
+| [`packages/scheduler-dash`](./packages/scheduler-dash) | The publishable library — `SchedulerDashModule`, `@TrackJob`, storage abstractions |
+| [`packages/scheduler-dash-ui`](./packages/scheduler-dash-ui) | React + Tailwind UI (Vite), built into `src/public/` |
 | [`apps/sample`](./apps/sample) | NestJS sample app demonstrating the library in action |
 
 ---
@@ -34,30 +30,26 @@ npm install @luisrodrigues/nestjs-scheduler-dashboard
 
 ```ts
 // app.module.ts
+import { ScheduleModule } from '@nestjs/schedule';
 import { SchedulerDashModule } from '@luisrodrigues/nestjs-scheduler-dashboard';
 
 @Module({
-  imports: [SchedulerDashModule.forRoot({ route: '/scheduler' })],
+  imports: [
+    ScheduleModule.forRoot(),
+    SchedulerDashModule.forRoot({ route: '_scheduler' }),
+  ],
 })
 export class AppModule {}
 ```
 
 ```ts
-// main.ts
-import { initializeSchedulerDash } from '@luisrodrigues/nestjs-scheduler-dashboard';
-import { SchedulerRegistry } from '@nestjs/schedule';
-
-const schedulerRegistry = app.get(SchedulerRegistry);
-initializeSchedulerDash(schedulerRegistry, {});
-```
-
-```ts
-// any job class
+// Replace @Cron with @TrackJob — same API, adds execution tracking
+// Before: @Cron(CronExpression.EVERY_HOUR)
 @TrackJob(CronExpression.EVERY_HOUR, { name: 'my-job' })
 async run() { /* ... */ }
 ```
 
-Access the dashboard at `http://localhost:3000/scheduler`
+Dashboard at `http://localhost:<port>/_scheduler`.
 
 ---
 
@@ -73,54 +65,72 @@ pnpm install
 
 | Command | Description |
 |---|---|
-| `pnpm build` | Build the library (also rebuilds the UI) |
+| `pnpm build` | Build the UI then compile the library TypeScript |
 | `pnpm dev` | Watch-compile the library TypeScript |
 | `pnpm dev:ui` | Start the UI in Vite dev mode |
-| `pnpm sample` | Run the sample NestJS app (with watch) |
-| `pnpm sample:build` | Build the library then build the sample app |
+| `pnpm sample` | Run the sample NestJS app with watch |
+| `pnpm sample:build` | Build the library then build the sample webpack bundle |
 
 ### Workspace structure
 
 ```
 nestjs-scheduler-dashboard/
 ├── apps/
-│   └── sample/          # NestJS sample app
+│   └── sample/              # NestJS sample app
+├── docs/
+│   └── pictures/            # Screenshots and assets
 ├── packages/
-│   ├── scheduler-dash/  # Library source (TypeScript)
-│   └── scheduler-dash-ui/  # React UI (Vite)
+│   ├── scheduler-dash/      # Library source (TypeScript)
+│   │   └── src/public/      # UI build output (generated — do not edit)
+│   └── scheduler-dash-ui/   # React UI (Vite)
 ├── package.json
 └── pnpm-workspace.yaml
 ```
 
-### Making UI changes
+### Running the sample
 
-The UI lives in `packages/scheduler-dash-ui`. After editing:
+1. Copy the example env file and fill in your credentials:
 
 ```bash
-pnpm build
+cp apps/sample/.env.example apps/sample/.env
 ```
 
-This rebuilds the UI and outputs it to `packages/scheduler-dash/ui/`, which is served by the module.
+```env
+# apps/sample/.env
+DASH_ROUTE=_scheduler
+DASH_USER=admin
+DASH_PASS=your-password
+```
 
-### Running the sample
+2. Start the app:
 
 ```bash
 pnpm sample
 ```
 
 - App: `http://localhost:3000`
-- Dashboard: `http://localhost:3000/scheduler`
+- Dashboard: `http://localhost:3000/_scheduler`
 
-The sample app registers several cron jobs decorated with `@TrackJob`. Click **Trigger** on any job to fire it immediately and see history populate.
+The sample uses `SchedulerDashModule.forRootAsync` with `@nestjs/config` to load credentials from the `.env` file. Click **Trigger** on any job to fire it immediately and see history populate.
+
+### Making UI changes
+
+The UI lives in `packages/scheduler-dash-ui/src`. After editing:
+
+```bash
+pnpm build
+```
+
+This rebuilds the UI into `packages/scheduler-dash/src/public/` and recompiles the library. The `public/` folder is also copied to `dist/public/` for the published package.
 
 ---
 
 ## How it works
 
-1. `SchedulerDashModule.forRoot({ route: '/scheduler' })` creates a global NestJS module that sets up the dashboard middleware.
-2. `initializeSchedulerDash(registry, options)` wires the `SchedulerRegistry` and storage into a `globalThis` singleton (`SchedulerDashContext`).
-3. `@TrackJob` reads `SchedulerDashContext` at runtime to record executions. Because storage is in `globalThis`, it is shared correctly even when pnpm resolves the package to multiple module instances.
-4. The dashboard serves a self-contained HTML dashboard and a REST API (`/api`, `/api/:name`, `/api/:name/trigger`, `/api/executions/:id/stop`) on the same port as the host app.
+1. `SchedulerDashModule.forRoot(options)` / `forRootAsync(asyncOptions)` is imported into the host `AppModule`. It provides `JobsService` and a storage instance via NestJS DI.
+2. `onModuleInit` sets `SchedulerDashContext.storage` on `globalThis` so `@TrackJob` — which runs as a method decorator outside DI — can write execution records to the same storage instance.
+3. `configure(consumer)` (NestJS `NestModule`) registers an Express middleware on `<route>*`. The middleware runs **before** NestJS routing, strips the route prefix, and delegates to an Express router that serves the REST API and the static UI files.
+4. `@TrackJob` is a drop-in replacement for `@Cron`. It wraps the method to save executions, enforce no-overlap, and manage concurrency queuing — all through `SchedulerDashContext`.
 
 ---
 

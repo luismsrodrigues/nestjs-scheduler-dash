@@ -6,7 +6,7 @@ import { TrackJob } from '@luisrodrigues/nestjs-scheduler-dashboard';
 export class Job7 {
   private readonly logger = new Logger(Job7.name);
 
-  @TrackJob(CronExpression.EVERY_MINUTE, { name: 'job-7' })
+  @TrackJob(CronExpression.EVERY_MINUTE, { name: 'job-7', disabled: true })
   run() {
     this.logger.log('Job7 running');
   }
