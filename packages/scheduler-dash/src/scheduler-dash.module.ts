@@ -6,7 +6,6 @@ import {
   Logger,
   NestModule,
   MiddlewareConsumer,
-  RequestMethod,
 } from '@nestjs/common';
 import { join } from 'path';
 import * as express from 'express';
@@ -32,17 +31,18 @@ export class SchedulerDashModule implements NestModule, OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    SchedulerDashContext.storage       = this.storage;
-    SchedulerDashContext.noOverlap     = this.options.noOverlap    ?? false;
+    SchedulerDashContext.storage = this.storage;
+    SchedulerDashContext.noOverlap = this.options.noOverlap ?? false;
     SchedulerDashContext.maxConcurrent = this.options.maxConcurrent;
-    const route = (this.options.route ?? '_scheduler').replace(/^\//, '');
+
+    const route = this.normalizeRoute(this.options.route);
     this.logger.log(`Dashboard available at /${route}`);
   }
 
   configure(consumer: MiddlewareConsumer): void {
-    const route      = (this.options.route ?? '_scheduler').replace(/^\//, '');
-    const guard      = createAuthGuard(this.options.auth);
-    const svc        = this.jobsService;
+    const route = this.normalizeRoute(this.options.route);
+    const guard = createAuthGuard(this.options.auth);
+    const svc = this.jobsService;
 
     const router = express.Router({ mergeParams: true });
 
@@ -76,26 +76,50 @@ export class SchedulerDashModule implements NestModule, OnModuleInit {
       const ok = svc.stopExecution(req.params.id);
       ok
         ? res.json({ stopped: req.params.id })
-        : res.status(404).json({ message: `Execution "${req.params.id}" not found or already finished` });
+        : res.status(404).json({
+            message: `Execution "${req.params.id}" not found or already finished`,
+          });
     });
 
-    router.get('*', (_req, res) => {
+    router.use((_req, res) => {
       res.sendFile('index.html', { root: PUBLIC_PATH });
     });
 
+    // Silently absorb browser-generated noise requests so they never reach
+    // NestJS's exception filter and pollute error logs.
+    const BROWSER_NOISE = [
+      '/favicon.ico',
+      '/.well-known/appspecific/com.chrome.devtools.json',
+    ];
+
     consumer
       .apply((req: any, res: any, next: any) => {
-        req.url = req.originalUrl.replace(new RegExp(`^/${route}`), '') || '/';
+        if (BROWSER_NOISE.includes(req.path)) {
+          res.status(204).end();
+          return;
+        }
+        next();
+      })
+      .forRoutes('/');
+
+    consumer
+      .apply((req: any, res: any, next: any) => {
+        req.url =
+          req.originalUrl.replace(new RegExp(`^/${this.escapeRegex(route)}(?=/|$)`), '') || '/';
+
         router(req, res, next);
       })
-      .forRoutes('*');
+      .forRoutes(route);
   }
 
   static forRoot(options: SchedulerDashOptions = {}): DynamicModule {
     const parsed = SchedulerDashOptionsSchema.safeParse(options);
+
     if (!parsed.success) {
       throw new Error(
-        `[SchedulerDash] Invalid options:\n${parsed.error.issues.map(i => `  • ${i.path.join('.')}: ${i.message}`).join('\n')}`,
+        `[SchedulerDash] Invalid options:\n${parsed.error.issues
+          .map(i => `  • ${i.path.join('.')}: ${i.message}`)
+          .join('\n')}`,
       );
     }
 
@@ -105,7 +129,8 @@ export class SchedulerDashModule implements NestModule, OnModuleInit {
         { provide: OPTIONS_TOKEN, useValue: options },
         {
           provide: STORAGE_TOKEN,
-          useFactory: (opts: SchedulerDashOptions) => opts.storage ?? new MemoryStorage({ historyRetention: 10 }),
+          useFactory: (opts: SchedulerDashOptions) =>
+            opts.storage ?? new MemoryStorage({ historyRetention: 10 }),
           inject: [OPTIONS_TOKEN],
         },
         JobsService,
@@ -123,22 +148,35 @@ export class SchedulerDashModule implements NestModule, OnModuleInit {
           useFactory: async (...args: any[]) => {
             const options = await asyncOptions.useFactory(...args);
             const parsed = SchedulerDashOptionsSchema.safeParse(options);
+
             if (!parsed.success) {
               throw new Error(
-                `[SchedulerDash] Invalid options:\n${parsed.error.issues.map(i => `  • ${i.path.join('.')}: ${i.message}`).join('\n')}`,
+                `[SchedulerDash] Invalid options:\n${parsed.error.issues
+                  .map(i => `  • ${i.path.join('.')}: ${i.message}`)
+                  .join('\n')}`,
               );
             }
+
             return options;
           },
           inject: asyncOptions.inject ?? [],
         },
         {
           provide: STORAGE_TOKEN,
-          useFactory: (opts: SchedulerDashOptions) => opts.storage ?? new MemoryStorage({ historyRetention: 10 }),
+          useFactory: (opts: SchedulerDashOptions) =>
+            opts.storage ?? new MemoryStorage({ historyRetention: 10 }),
           inject: [OPTIONS_TOKEN],
         },
         JobsService,
       ],
     };
+  }
+
+  private normalizeRoute(route?: string): string {
+    return (route ?? '_scheduler').replace(/^\/+|\/+$/g, '');
+  }
+
+  private escapeRegex(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }

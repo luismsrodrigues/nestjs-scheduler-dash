@@ -16,8 +16,9 @@ export interface JobMetrics {
 export interface CronJob {
   name: string;
   cronExpression: string | null;
-  running: boolean;
-  nextRun: string;
+  active: boolean;   // job is enabled and has a future scheduled run
+  running: boolean;  // job is currently mid-execution
+  nextRun: string | null;
   history: JobExecution[];
   metrics: JobMetrics;
 }

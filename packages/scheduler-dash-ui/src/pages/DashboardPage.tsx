@@ -112,7 +112,7 @@ function sortJobs(jobs: CronJob[], key: SortKey, dir: SortDir): CronJob[] {
       case 'cronExpression': cmp = (a.cronExpression ?? '').localeCompare(b.cronExpression ?? ''); break;
       case 'status':        cmp = Number(b.running) - Number(a.running); break;
       case 'lastRun':       cmp = lastRunDate(a) - lastRunDate(b); break;
-      case 'nextRun':       cmp = new Date(a.nextRun).getTime() - new Date(b.nextRun).getTime(); break;
+      case 'nextRun':       cmp = new Date(a.nextRun ?? 0).getTime() - new Date(b.nextRun ?? 0).getTime(); break;
       case 'successRate':   cmp = successRate(a) - successRate(b); break;
     }
     return dir === 'asc' ? cmp : -cmp;
@@ -286,9 +286,9 @@ export default function DashboardPage() {
                             : <span className="text-zinc-400 text-xs">—</span>}
                         </td>
                         <td className="px-4 py-3.5">
-                          <Badge variant={job.running ? 'active' : 'disabled'}>
-                            <span className={cn('w-1.5 h-1.5 rounded-full', job.running ? 'bg-emerald-500' : 'bg-amber-400')} />
-                            {job.running ? 'Active' : 'Disabled'}
+                          <Badge variant={job.active ? 'active' : 'disabled'}>
+                            <span className={cn('w-1.5 h-1.5 rounded-full', job.active ? 'bg-emerald-500' : 'bg-amber-400')} />
+                            {job.active ? 'Active' : 'Disabled'}
                           </Badge>
                         </td>
                         <td className="px-4 py-3.5 font-mono text-xs text-zinc-500 dark:text-zinc-400">
@@ -306,7 +306,7 @@ export default function DashboardPage() {
                           ) : '—'}
                         </td>
                         <td className="px-4 py-3.5 font-mono text-xs text-zinc-500 dark:text-zinc-400">
-                          {job.running ? formatNextRun(job.nextRun) : '—'}
+                          {job.active && job.nextRun ? formatNextRun(job.nextRun) : '—'}
                         </td>
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2">
@@ -324,8 +324,8 @@ export default function DashboardPage() {
                             size="sm"
                             variant="outline"
                             onClick={e => handleTrigger(e, job.name)}
-                            disabled={triggering === job.name || !job.running}
-                            title={!job.running ? 'Job is disabled' : 'Trigger job'}
+                            disabled={triggering === job.name || !job.active}
+                            title={!job.active ? 'Job is disabled' : 'Trigger job'}
                           >
                             <Zap className="w-3 h-3" />
                             {triggering === job.name ? 'Running…' : 'Trigger'}

@@ -6,6 +6,16 @@
   <component name="ChangeListManager">
     <list default="true" id="b59dcf52-a033-4cbd-96b9-7ce9d46431a0" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash-ui/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash-ui/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash-ui/src/pages/DashboardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash-ui/src/pages/DashboardPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash-ui/src/pages/JobDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash-ui/src/pages/JobDetailPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash-ui/src/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash-ui/src/types/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/src/decorators/track-job.decorator.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash/src/decorators/track-job.decorator.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/src/jobs.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash/src/jobs.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/src/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash/src/public/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/src/scheduler-dash.context.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash/src/scheduler-dash.context.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/src/scheduler-dash.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash/src/scheduler-dash.module.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -13,7 +23,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="65" />
+    <option name="cachedIndexableFilesCount" value="67" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Settings">
@@ -71,6 +81,9 @@
       <updated>1775348146808</updated>
       <workItem from="1775348148282" duration="15504000" />
       <workItem from="1775408405218" duration="22361000" />
+      <workItem from="1775517130196" duration="1928000" />
+      <workItem from="1775519072057" duration="13000" />
+      <workItem from="1775519092786" duration="23000" />
     </task>
     <servers />
   </component>

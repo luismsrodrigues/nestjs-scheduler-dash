@@ -90,6 +90,10 @@ export function TrackJob(
     const jobName = options?.name ?? `${(target as any).constructor.name}.${String(propertyKey)}`;
     const jobNoOverlap = options?.noOverlap;
 
+    if (options?.disabled) {
+      SchedulerDashContext.disabledJobs.add(jobName);
+    }
+
     descriptor.value = async function (...args: unknown[]) {
       const noOverlap = jobNoOverlap ?? SchedulerDashContext.noOverlap;
       const storage = SchedulerDashContext.storage;
