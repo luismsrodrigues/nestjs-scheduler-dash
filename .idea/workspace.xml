@@ -5,21 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b59dcf52-a033-4cbd-96b9-7ce9d46431a0" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/1.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/2.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/sample/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/apps/sample/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/sample/src/app.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/sample/src/app.module.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash-ui/src/pages/DashboardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash-ui/src/pages/DashboardPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/src/public/assets/index-cxgVvG8b.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/src/public/assets/index-vJzJcDsD.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/src/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash/src/public/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/src/scheduler-dash.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash/src/scheduler-dash.module.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/scheduler-dash/src/scheduler-dash.options.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/scheduler-dash/src/scheduler-dash.options.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -56,7 +42,7 @@
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feat/adjust-ui&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
@@ -84,7 +70,7 @@
       <option name="presentableId" value="Default" />
       <updated>1775348146808</updated>
       <workItem from="1775348148282" duration="15504000" />
-      <workItem from="1775408405218" duration="21590000" />
+      <workItem from="1775408405218" duration="22361000" />
     </task>
     <servers />
   </component>

@@ -44,9 +44,11 @@ export class SchedulerDashModule implements NestModule, OnModuleInit {
     const guard      = createAuthGuard(this.options.auth);
     const svc        = this.jobsService;
 
-    const router = express.Router();
+    const router = express.Router({ mergeParams: true });
 
     router.use(guard);
+
+    router.use(express.static(PUBLIC_PATH));
 
     router.get('/api', (_req, res) => {
       try {
@@ -77,18 +79,16 @@ export class SchedulerDashModule implements NestModule, OnModuleInit {
         : res.status(404).json({ message: `Execution "${req.params.id}" not found or already finished` });
     });
 
-    router.use(express.static(PUBLIC_PATH));
-
     router.get('*', (_req, res) => {
-      res.sendFile(join(PUBLIC_PATH, 'index.html'));
+      res.sendFile('index.html', { root: PUBLIC_PATH });
     });
 
     consumer
       .apply((req: any, res: any, next: any) => {
-        req.url = req.url.replace(new RegExp(`^/${route}`), '') || '/';
+        req.url = req.originalUrl.replace(new RegExp(`^/${route}`), '') || '/';
         router(req, res, next);
       })
-      .forRoutes({ path: `${route}*`, method: RequestMethod.ALL });
+      .forRoutes('*');
   }
 
   static forRoot(options: SchedulerDashOptions = {}): DynamicModule {
