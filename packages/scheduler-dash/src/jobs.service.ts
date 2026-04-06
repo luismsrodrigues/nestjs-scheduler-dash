@@ -1,11 +1,14 @@
+import { Injectable, Inject } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { Storage } from './storage/storage.abstract';
 import { stopExecutionById } from './decorators/job-concurrency';
+import { STORAGE_TOKEN } from './scheduler-dash.constants';
 
+@Injectable()
 export class JobsService {
   constructor(
     private readonly schedulerRegistry: SchedulerRegistry,
-    private readonly storage: Storage,
+    @Inject(STORAGE_TOKEN) private readonly storage: Storage,
   ) {}
 
   getJobs() {
@@ -19,7 +22,7 @@ export class JobsService {
     }));
 
     const intervals = this.schedulerRegistry.getIntervals().map((name) => ({ name }));
-    const timeouts = this.schedulerRegistry.getTimeouts().map((name) => ({ name }));
+    const timeouts  = this.schedulerRegistry.getTimeouts().map((name) => ({ name }));
 
     return { cron, intervals, timeouts };
   }

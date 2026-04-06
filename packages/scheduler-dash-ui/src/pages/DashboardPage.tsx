@@ -230,9 +230,9 @@ export default function DashboardPage() {
                             : <span className="text-zinc-400 text-xs">—</span>}
                         </td>
                         <td className="px-4 py-3.5">
-                          <Badge variant={job.running ? 'active' : 'inactive'}>
-                            <span className={cn('w-1.5 h-1.5 rounded-full', job.running ? 'bg-emerald-500' : 'bg-zinc-400')} />
-                            {job.running ? 'Active' : 'Stopped'}
+                          <Badge variant={job.running ? 'active' : 'disabled'}>
+                            <span className={cn('w-1.5 h-1.5 rounded-full', job.running ? 'bg-emerald-500' : 'bg-amber-400')} />
+                            {job.running ? 'Active' : 'Disabled'}
                           </Badge>
                         </td>
                         <td className="px-4 py-3.5 font-mono text-xs text-zinc-500 dark:text-zinc-400">
@@ -268,8 +268,8 @@ export default function DashboardPage() {
                             size="sm"
                             variant="outline"
                             onClick={e => handleTrigger(e, job.name)}
-                            disabled={triggering === job.name}
-                            title="Trigger job"
+                            disabled={triggering === job.name || !job.running}
+                            title={!job.running ? 'Job is disabled' : 'Trigger job'}
                           >
                             <Zap className="w-3 h-3" />
                             {triggering === job.name ? 'Running…' : 'Trigger'}

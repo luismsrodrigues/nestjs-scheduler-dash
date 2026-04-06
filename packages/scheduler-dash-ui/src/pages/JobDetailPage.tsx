@@ -158,7 +158,8 @@ export default function JobDetailPage() {
             <Button
               size="md"
               onClick={() => doAction(() => triggerJob(decodedName))}
-              disabled={actioning}
+              disabled={actioning || !job?.running}
+              title={!job?.running ? 'Job is disabled' : 'Trigger job'}
             >
               <Zap className="w-3.5 h-3.5" />
               Trigger
@@ -173,9 +174,9 @@ export default function JobDetailPage() {
       <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
         {/* Job identity */}
         <div className="flex flex-wrap items-start gap-3">
-          <Badge variant={job.running ? 'active' : 'inactive'}>
-            <span className={cn('w-1.5 h-1.5 rounded-full', job.running ? 'bg-emerald-500' : 'bg-zinc-400')} />
-            {job.running ? 'Active' : 'Stopped'}
+          <Badge variant={job.running ? 'active' : 'disabled'}>
+            <span className={cn('w-1.5 h-1.5 rounded-full', job.running ? 'bg-emerald-500' : 'bg-amber-400')} />
+            {job.running ? 'Active' : 'Disabled'}
           </Badge>
           {job.cronExpression && (
             <code className="font-mono text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">

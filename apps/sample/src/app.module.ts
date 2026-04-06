@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SchedulerDashModule } from '@luisrodrigues/nestjs-scheduler-dashboard';
 import { HourlyJob } from './jobs/hourly.job';
 import { Job1 } from './jobs/job-1';
 import { Job2 } from './jobs/job-2';
@@ -10,7 +11,10 @@ import { Job6 } from './jobs/job-6';
 import { Job7 } from './jobs/job-7';
 
 @Module({
-  imports: [ScheduleModule.forRoot()],
+  imports: [
+    ScheduleModule.forRoot(),
+    SchedulerDashModule.forRoot({ route: '_scheduler', auth: { username: 'admin', password: '123'} }),
+  ],
   providers: [HourlyJob, Job1, Job2, Job3, Job4, Job5, Job6, Job7],
 })
 export class AppModule {}
