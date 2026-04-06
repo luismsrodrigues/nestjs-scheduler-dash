@@ -1,6 +1,6 @@
 {
   "name": "@luisrodrigues/nestjs-scheduler-dashboard",
-  "version": "0.0.6",
+  "version": "0.1.1",
   "description": "Dashboard for @nestjs/schedule — embedded UI, job history, metrics, stop/trigger controls",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -40,6 +40,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/luisrodrigues/nestjs-scheduler-dashboard"
+    "url": "https://github.com/luismsrodrigues/nestjs-scheduler-dash"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

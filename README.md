@@ -6,11 +6,7 @@ Monorepo for `@luisrodrigues/nestjs-scheduler-dashboard` — a plug-and-play das
 
 ## Preview
 
-**Dashboard - Jobs List**
-![Dashboard Jobs List](./1.jpg)
-
-**Job Detail - Execution History**
-![Job Detail](./2.jpg)
+<img src="./docs/pictures/1.jpg" width="49%" alt="Dashboard - Jobs List" /> <img src="./docs/pictures/2.jpg" width="49%" alt="Job Detail - Execution History" />
 
 ---
 
@@ -47,7 +43,8 @@ export class AppModule {}
 ```
 
 ```ts
-// any job class
+// Replace @Cron with @TrackJob — same API, adds execution tracking
+// Before: @Cron(CronExpression.EVERY_HOUR)
 @TrackJob(CronExpression.EVERY_HOUR, { name: 'my-job' })
 async run() { /* ... */ }
 ```
@@ -80,6 +77,8 @@ pnpm install
 nestjs-scheduler-dashboard/
 ├── apps/
 │   └── sample/              # NestJS sample app
+├── docs/
+│   └── pictures/            # Screenshots and assets
 ├── packages/
 │   ├── scheduler-dash/      # Library source (TypeScript)
 │   │   └── src/public/      # UI build output (generated — do not edit)
@@ -87,6 +86,32 @@ nestjs-scheduler-dashboard/
 ├── package.json
 └── pnpm-workspace.yaml
 ```
+
+### Running the sample
+
+1. Copy the example env file and fill in your credentials:
+
+```bash
+cp apps/sample/.env.example apps/sample/.env
+```
+
+```env
+# apps/sample/.env
+DASH_ROUTE=_scheduler
+DASH_USER=admin
+DASH_PASS=your-password
+```
+
+2. Start the app:
+
+```bash
+pnpm sample
+```
+
+- App: `http://localhost:3000`
+- Dashboard: `http://localhost:3000/_scheduler`
+
+The sample uses `SchedulerDashModule.forRootAsync` with `@nestjs/config` to load credentials from the `.env` file. Click **Trigger** on any job to fire it immediately and see history populate.
 
 ### Making UI changes
 
@@ -98,22 +123,11 @@ pnpm build
 
 This rebuilds the UI into `packages/scheduler-dash/src/public/` and recompiles the library. The `public/` folder is also copied to `dist/public/` for the published package.
 
-### Running the sample
-
-```bash
-pnpm sample
-```
-
-- App: `http://localhost:3000`
-- Dashboard: `http://localhost:3000/_scheduler`
-
-The sample app registers several cron jobs decorated with `@TrackJob`. Click **Trigger** on any job to fire it immediately and see history populate.
-
 ---
 
 ## How it works
 
-1. `SchedulerDashModule.forRoot(options)` is imported into the host `AppModule`. It provides `JobsService` and a storage instance via NestJS DI.
+1. `SchedulerDashModule.forRoot(options)` / `forRootAsync(asyncOptions)` is imported into the host `AppModule`. It provides `JobsService` and a storage instance via NestJS DI.
 2. `onModuleInit` sets `SchedulerDashContext.storage` on `globalThis` so `@TrackJob` — which runs as a method decorator outside DI — can write execution records to the same storage instance.
 3. `configure(consumer)` (NestJS `NestModule`) registers an Express middleware on `<route>*`. The middleware runs **before** NestJS routing, strips the route prefix, and delegates to an Express router that serves the REST API and the static UI files.
 4. `@TrackJob` is a drop-in replacement for `@Cron`. It wraps the method to save executions, enforce no-overlap, and manage concurrency queuing — all through `SchedulerDashContext`.

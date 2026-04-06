@@ -13,7 +13,7 @@ import * as express from 'express';
 import { Storage } from './storage/storage.abstract';
 import { MemoryStorage } from './storage/memory.storage';
 import { SchedulerDashContext } from './scheduler-dash.context';
-import { SchedulerDashOptions } from './scheduler-dash.options';
+import { SchedulerDashOptions, SchedulerDashAsyncOptions } from './scheduler-dash.options';
 import { SchedulerDashOptionsSchema } from './scheduler-dash.schema';
 import { JobsService } from './jobs.service';
 import { createAuthGuard } from './auth';
@@ -99,13 +99,44 @@ export class SchedulerDashModule implements NestModule, OnModuleInit {
       );
     }
 
-    const storage = options.storage ?? new MemoryStorage({ historyRetention: 10 });
-
     return {
       module: SchedulerDashModule,
       providers: [
-        { provide: OPTIONS_TOKEN,  useValue: options },
-        { provide: STORAGE_TOKEN,  useValue: storage },
+        { provide: OPTIONS_TOKEN, useValue: options },
+        {
+          provide: STORAGE_TOKEN,
+          useFactory: (opts: SchedulerDashOptions) => opts.storage ?? new MemoryStorage({ historyRetention: 10 }),
+          inject: [OPTIONS_TOKEN],
+        },
+        JobsService,
+      ],
+    };
+  }
+
+  static forRootAsync(asyncOptions: SchedulerDashAsyncOptions): DynamicModule {
+    return {
+      module: SchedulerDashModule,
+      imports: asyncOptions.imports ?? [],
+      providers: [
+        {
+          provide: OPTIONS_TOKEN,
+          useFactory: async (...args: any[]) => {
+            const options = await asyncOptions.useFactory(...args);
+            const parsed = SchedulerDashOptionsSchema.safeParse(options);
+            if (!parsed.success) {
+              throw new Error(
+                `[SchedulerDash] Invalid options:\n${parsed.error.issues.map(i => `  • ${i.path.join('.')}: ${i.message}`).join('\n')}`,
+              );
+            }
+            return options;
+          },
+          inject: asyncOptions.inject ?? [],
+        },
+        {
+          provide: STORAGE_TOKEN,
+          useFactory: (opts: SchedulerDashOptions) => opts.storage ?? new MemoryStorage({ historyRetention: 10 }),
+          inject: [OPTIONS_TOKEN],
+        },
         JobsService,
       ],
     };

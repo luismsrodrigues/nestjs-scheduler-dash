@@ -4,15 +4,72 @@ import {
   Zap, RefreshCw, Sun, Moon, ChevronUp, ChevronDown,
   ChevronsUpDown, ChevronLeft, ChevronRight, Activity,
 } from 'lucide-react';
+import {
+  LineChart, Line, ResponsiveContainer, Tooltip,
+} from 'recharts';
 import { fetchJobs, triggerJob } from '@/api/jobs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { CardHeader, CardTitle } from '@/components/ui/card';
 import { cn, timeAgo, formatNextRun } from '@/lib/utils';
 import { useTheme } from '@/contexts/theme';
 import type { CronJob } from '@/types';
 
 type SortKey = 'name' | 'cronExpression' | 'status' | 'lastRun' | 'nextRun' | 'successRate';
+
+function buildGlobalHourlyBuckets(jobs: CronJob[]) {
+  const now = Date.now();
+  const buckets: { hour: string; completed: number; failed: number }[] = Array.from({ length: 24 }, (_, i) => {
+    const d = new Date(now - (23 - i) * 3_600_000);
+    return { hour: `${d.getHours()}h`, completed: 0, failed: 0 };
+  });
+  for (const job of jobs) {
+    for (const entry of job.history) {
+      const ms = new Date(entry.startedAt).getTime();
+      const hoursAgo = (now - ms) / 3_600_000;
+      if (hoursAgo > 24 || hoursAgo < 0) continue;
+      const idx = 23 - Math.floor(hoursAgo);
+      if (idx < 0 || idx > 23) continue;
+      if (entry.status === 'completed') buckets[idx].completed++;
+      else if (entry.status === 'failed') buckets[idx].failed++;
+    }
+  }
+  return buckets;
+}
+
+function ActivityChartCard({ jobs }: { jobs: CronJob[] }) {
+  const data = buildGlobalHourlyBuckets(jobs);
+  return (
+    <Card>
+      <CardContent className="py-4">
+        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
+          Activity (24h)
+        </p>
+        <div className="h-14">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  return (
+                    <div className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs shadow-sm">
+                      <p className="font-medium text-zinc-500 dark:text-zinc-400 mb-1">{label}</p>
+                      <p className="text-emerald-600 dark:text-emerald-400">ok: {payload[0]?.value ?? 0}</p>
+                      <p className="text-red-500">err: {payload[1]?.value ?? 0}</p>
+                    </div>
+                  );
+                }}
+              />
+              <Line type="monotone" dataKey="completed" stroke="#10b981" strokeWidth={1.5} dot={false} />
+              <Line type="monotone" dataKey="failed" stroke="#ef4444" strokeWidth={1.5} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 type SortDir = 'asc' | 'desc';
 
 const PAGE_SIZES = [10, 25, 50, 100];
@@ -118,7 +175,6 @@ export default function DashboardPage() {
 
   const totalRuns   = jobs.reduce((s, j) => s + j.metrics.totalRuns, 0);
   const totalFailed = jobs.reduce((s, j) => s + j.metrics.failedRuns, 0);
-  const activeJobs  = jobs.filter(j => j.running).length;
 
   function ThHeader({ col, label }: { col: SortKey; label: string }) {
     return (
@@ -164,7 +220,7 @@ export default function DashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <StatCard label="Total Jobs" value={jobs.length} />
-          <StatCard label="Active" value={activeJobs} color="text-emerald-600 dark:text-emerald-400" />
+          <ActivityChartCard jobs={jobs} />
           <StatCard label="Total Runs" value={totalRuns.toLocaleString()} color="text-blue-600 dark:text-blue-400" />
           <StatCard
             label="Failed Runs"

@@ -51,9 +51,11 @@ import { SchedulerDashModule } from '@luisrodrigues/nestjs-scheduler-dashboard';
 export class AppModule {}
 ```
 
-### 2. Decorate your jobs
+### 2. Replace `@Cron` with `@TrackJob` on every job
 
-Replace `@Cron` with `@TrackJob` — it accepts the same arguments:
+`@TrackJob` is a wrapper around NestJS's `@Cron` decorator. It registers the cron schedule exactly as `@Cron` does, and additionally records every execution (start time, duration, status, errors) so the dashboard can display them.
+
+> **Jobs decorated with `@Cron` instead of `@TrackJob` will still run on schedule but will not appear in the dashboard history.**
 
 ```ts
 import { Injectable } from '@nestjs/common';
@@ -62,9 +64,10 @@ import { TrackJob } from '@luisrodrigues/nestjs-scheduler-dashboard';
 
 @Injectable()
 export class ReportJob {
+  // Before: @Cron(CronExpression.EVERY_HOUR)
   @TrackJob(CronExpression.EVERY_HOUR, { name: 'generate-report' })
   async run() {
-    // your job logic
+    // your job logic — no other changes needed
   }
 }
 ```
@@ -167,7 +170,9 @@ SchedulerDashModule.forRoot({
 
 ## `@TrackJob` decorator
 
-Drop-in replacement for `@Cron`. Accepts all the same options plus `noOverlap`.
+`@TrackJob` is a **wrapper around `@Cron`** from `@nestjs/schedule`. It accepts every argument that `@Cron` accepts and passes them through unchanged, so migrating an existing job is a one-line change. The only addition is the `noOverlap` option and the automatic execution tracking.
+
+**Every scheduled job must use `@TrackJob` instead of `@Cron`.** Jobs that remain on `@Cron` will run normally but their executions will not be recorded or visible in the dashboard.
 
 ```ts
 @TrackJob(cronTime, options?)

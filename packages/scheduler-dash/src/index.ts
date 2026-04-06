@@ -5,4 +5,4 @@ export type { IStorageOptions } from './storage/storage.abstract';
 export { MemoryStorage } from './storage/memory.storage';
 export type { JobExecution } from './storage/job-execution.interface';
 export type { JobMetrics } from './storage/job-metrics.interface';
-export type { SchedulerDashOptions, SchedulerDashAuth } from './scheduler-dash.options';
+export type { SchedulerDashOptions, SchedulerDashAuth, SchedulerDashAsyncOptions } from './scheduler-dash.options';
