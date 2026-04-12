@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2021",
+    "strict": false,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "paths": {
+      "@sample-ms/shared": ["../../packages/shared/src/index.ts"],
+      "@sample-ms/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
