@@ -1,0 +1,15 @@
+{
+  "name": "sample-microservices",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Sample: 1 NestJS gateway + 2 microservices connected via TSRPC (one with scheduler dashboard)",
+  "scripts": {
+    "dev": "concurrently --names \"random,scheduler,gateway\" --prefix-colors \"blue,green,yellow\" \"pnpm --filter @sample-ms/random-service dev\" \"pnpm --filter @sample-ms/scheduler-service dev\" \"pnpm --filter @sample-ms/gateway dev\"",
+    "gateway": "pnpm --filter @sample-ms/gateway dev",
+    "random-service": "pnpm --filter @sample-ms/random-service dev",
+    "scheduler-service": "pnpm --filter @sample-ms/scheduler-service dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

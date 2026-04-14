@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2021",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "paths": {
+      "@luisrodrigues/nestjs-scheduler-dashboard": [
+        "../../../../packages/scheduler-dash/src/index.ts"
+      ],
+      "@sample-ms/shared": ["../../packages/shared/src/index.ts"],
+      "@sample-ms/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}

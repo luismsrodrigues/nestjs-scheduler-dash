@@ -1,0 +1,9 @@
+{
+  "name": "@sample-ms/shared",
+  "version": "0.0.1",
+  "private": true,
+  "main": "src/index.ts",
+  "dependencies": {
+    "tsrpc-proto": "^1.4.3"
+  }
+}
